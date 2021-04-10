@@ -95,14 +95,12 @@ def get_cleaned_data(
     if intermediate_file_path.exists():
         return load_intermediate(intermediate_file_path=intermediate_file_path)
 
-    else:
+    if not raw_file_path.exists():
+        get_and_save(url=url, raw_file_path=raw_file_path)
 
-        if not raw_file_path.exists():
-            get_and_save(url=url, raw_file_path=raw_file_path)
-
-        df: DataFrame = load_and_clean(raw_file_path=raw_file_path)
-        save_intermediate(df, intermediate_file_path=intermediate_file_path)
-        return df
+    df: DataFrame = load_and_clean(raw_file_path=raw_file_path)
+    save_intermediate(df, intermediate_file_path=intermediate_file_path)
+    return df
 
 
 if __name__ == "__main__":
