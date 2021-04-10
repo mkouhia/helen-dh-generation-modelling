@@ -10,6 +10,7 @@ pytest = "*"
 jupyter = "*"
 pandas = "*"
 requests = "*"
+pyarrow = "*"
 
 [requires]
 python_version = "3.8"
