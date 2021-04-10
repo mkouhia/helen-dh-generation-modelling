@@ -13,55 +13,90 @@ HELEN_DATA_FILENAME = 'hki_dh_2015_2020_a.csv'
 HELEN_INTERMEDIATE_FILENAME = 'helen_cleaned.feather'
 
 
-def get_and_save(url: str = HELEN_DATA_URL, save_file_path: Path = raw_data_path / HELEN_DATA_FILENAME):
+def get_and_save(url: str = HELEN_DATA_URL, raw_file_path: Path = raw_data_path / HELEN_DATA_FILENAME):
     """
     Get DH data CSV, save to file
 
     :param url: online location for data
-    :param save_file_path: file where data is to be saved
+    :param raw_file_path: local file path for raw data
     """
-    logging.info(f'Downloading Helen DH data from {HELEN_DATA_URL} to {save_file_path}')
+    logging.info(f'Downloading Helen DH data from {HELEN_DATA_URL} to {raw_file_path}')
     r = requests.get(url)
-    with save_file_path.open('wb') as f:
+    with raw_file_path.open('wb') as f:
         f.write(r.content)
 
 
-def load_and_clean(file_path: Path = raw_data_path / HELEN_DATA_FILENAME) -> DataFrame:
+def load_and_clean(raw_file_path: Path = raw_data_path / HELEN_DATA_FILENAME) -> DataFrame:
     """
     Load dataset from disk, clean up features
 
-    :param file_path: local file location for data
+    :param raw_file_path: local file path for raw data
     :return: Pandas dataframe, with index column 'date_time' and feature column 'dh_MWh'
     """
     logging.info("Load Helen raw dataset from CSV, clean up file")
-    df = pd.read_csv(file_path, sep=';', decimal=',', parse_dates=['date_time'], dayfirst=True) \
+    df = pd.read_csv(raw_file_path, sep=';', decimal=',', parse_dates=['date_time'], dayfirst=True) \
         .set_index('date_time')
     df.index = df.index.tz_localize(tz='Europe/Helsinki', ambiguous='infer')
     return df
 
 
-def save_intermediate(df: DataFrame, save_file_path: Path = intermediate_data_path / HELEN_INTERMEDIATE_FILENAME):
-    logging.info(f'Save cleaned intermediate Helen dataset to {save_file_path}')
-    df.reset_index()\
-        .to_feather(save_file_path)
+def save_intermediate(df: DataFrame,
+                      intermediate_file_path: Path = intermediate_data_path / HELEN_INTERMEDIATE_FILENAME):
+    """
+    Save intermediate representation of dataframe to disk
+
+    :param df: dataframe to be saved
+    :param intermediate_file_path: intermediate file location
+    """
+    logging.info(f'Save cleaned intermediate Helen dataset to {intermediate_file_path}')
+    df.reset_index() \
+        .to_feather(intermediate_file_path)
 
 
-def load_intermediate(load_file_path: Path = intermediate_data_path / HELEN_INTERMEDIATE_FILENAME) -> DataFrame:
-    return pd.read_feather(load_file_path)\
+def load_intermediate(intermediate_file_path: Path = intermediate_data_path / HELEN_INTERMEDIATE_FILENAME) -> DataFrame:
+    """
+    Load pre-saved intermediate file from disk
+
+    :param intermediate_file_path: intermediate file location
+    :return: loaded dataframe, with 'date_time' as index
+    """
+    return pd.read_feather(intermediate_file_path) \
         .set_index('date_time')
+
+
+def get_cleaned_data(
+        url: str = HELEN_DATA_URL,
+        raw_file_path: Path = raw_data_path / HELEN_DATA_FILENAME,
+        intermediate_file_path: Path = intermediate_data_path / HELEN_INTERMEDIATE_FILENAME) -> DataFrame:
+    """
+    Get cleaned district heat generation data
+
+    Try to load intermediate data from disk. If it does not exist, download raw data and clean it.
+
+    :param url: online location for data
+    :param raw_file_path: local file path for raw data
+    :param intermediate_file_path: intermediate file location
+    :return: Cleaned district heat generation dataframe
+    """
+    logging.info("Verify that Helen raw & intermediate data exists")
+
+    if intermediate_file_path.exists():
+        df: DataFrame = load_intermediate()
+        return df
+
+    else:
+
+        if not raw_file_path.exists():
+            get_and_save(url=url, raw_file_path=raw_file_path)
+
+        df: DataFrame = load_and_clean(raw_file_path=raw_file_path)
+        save_intermediate(df, intermediate_file_path=intermediate_file_path)
+        return df
 
 
 def main():
     logging.basicConfig(level=logging.INFO)
-
-    logging.info("Verify that Helen raw & intermediate data exists")
-
-    if not (raw_data_path / HELEN_DATA_FILENAME).exists():
-        get_and_save()
-
-    if not (intermediate_data_path / HELEN_INTERMEDIATE_FILENAME).exists():
-        df: DataFrame = load_and_clean()
-        save_intermediate(df)
+    get_cleaned_data()
 
 
 if __name__ == '__main__':
