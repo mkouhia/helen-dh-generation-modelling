@@ -5,6 +5,12 @@ verify_ssl = true
 
 [dev-packages]
 pytest = "*"
+black = "*"
+isort = "*"
+flake8 = "*"
+mypy = "*"
+pytest-cov = "*"
+requests-mock = "*"
 
 [packages]
 jupyter = "*"
@@ -15,3 +21,6 @@ dvc = "*"
 
 [requires]
 python_version = "3.8"
+
+[pipenv]
+allow_prereleases = true
