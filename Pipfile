@@ -11,6 +11,7 @@ flake8 = "*"
 mypy = "*"
 pytest-cov = "*"
 requests-mock = "*"
+pre-commit = "*"
 
 [packages]
 jupyter = "*"
