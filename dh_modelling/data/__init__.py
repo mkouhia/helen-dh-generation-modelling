@@ -6,6 +6,7 @@ from pandas import DataFrame, DatetimeIndex
 
 raw_data_path = (Path(__file__) / "../../../data/raw").resolve()
 intermediate_data_path = (Path(__file__) / "../../../data/intermediate").resolve()
+processed_data_path = (Path(__file__) / "../../../data/processed").resolve()
 
 
 def save_intermediate(

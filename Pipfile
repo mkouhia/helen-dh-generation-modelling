@@ -19,6 +19,8 @@ pandas = "*"
 requests = "*"
 pyarrow = "*"
 dvc = "*"
+matplotlib = "*"
+pytest-mock = "*"
 
 [requires]
 python_version = "3.8"
