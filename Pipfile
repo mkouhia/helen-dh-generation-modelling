@@ -18,9 +18,11 @@ jupyter = "*"
 pandas = "*"
 requests = "*"
 pyarrow = "*"
-dvc = "*"
+dvc = {extras = ["s3"],version = "*"}
 matplotlib = "*"
 pytest-mock = "*"
+sklearn = "*"
+pyyaml = "*"
 
 [requires]
 python_version = "3.8"

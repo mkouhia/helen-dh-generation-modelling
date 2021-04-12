@@ -1,0 +1,4 @@
+[core]
+    remote = s3-general
+['remote "s3-general"']
+    url = s3://mkouhia-data-science-general/helen-dh-generation-modelling
