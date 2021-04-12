@@ -1,6 +1,6 @@
 stages:
   prepare:
-    cmd: python dh_modelling/data/prepare_data.py
+    cmd: python dh_modelling/data/prepare_data.py --split ${prepare.split}
     deps:
     - data/raw/csv-f2faff3e-672d-41a0-8bf3-278ab00d8796.csv
     - data/raw/csv-270db165-c228-466b-a438-69caa8c8f075.csv
@@ -11,8 +11,6 @@ stages:
     - data/raw/csv-f6c18948-8fac-45ac-ab2a-bb51173800dc.csv
     - data/raw/hki_dh_2015_2020_a.csv
     - dh_modelling/data/prepare_data.py
-    params:
-    - prepare.split
     outs:
     - data/processed/master.feather
     - data/processed/test.feather

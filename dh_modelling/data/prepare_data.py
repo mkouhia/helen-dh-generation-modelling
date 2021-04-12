@@ -1,3 +1,4 @@
+import argparse
 import logging
 import os
 from datetime import datetime
@@ -8,7 +9,6 @@ import pandas as pd
 from pandas import DataFrame, DatetimeIndex, concat, merge, read_csv
 
 PathLike = Union[Path, os.PathLike]
-
 
 HELEN_DATA_FILENAME = "hki_dh_2015_2020_a.csv"
 
@@ -156,10 +156,21 @@ def train_test_split_sorted(
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
+    parser = argparse.ArgumentParser(
+        description="Prepare data from raw sources",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument(
+        "--split", help="Test data size, fraction of total", type=float, default=0.2
+    )
+
+    args = parser.parse_args()
+    print(args)
+
     df_weather = FmiData.read_fmi()
     df_generation = GenerationData.read_helen()
 
-    gen_train, gen_test = train_test_split_sorted(df_generation)
+    gen_train, gen_test = train_test_split_sorted(df_generation, test_size=args.split)
 
     df_master: DataFrame = merge_dataframes(df_helen=gen_train, df_fmi=df_weather)
     save_dataframe(
