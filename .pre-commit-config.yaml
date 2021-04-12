@@ -37,6 +37,8 @@ repos:
         language: system
         entry: pipenv run pytest
         types: [python]
+        always_run: true
+        pass_filenames: false
 
       - id: pytest-cov
         name: pytest
