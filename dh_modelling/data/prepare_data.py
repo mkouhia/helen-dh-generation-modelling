@@ -1,10 +1,8 @@
 import logging
 from pathlib import Path
-from typing import Tuple
 
 import pandas as pd
 import requests
-import yaml
 from pandas import DataFrame, DatetimeIndex, concat, merge, read_csv
 from pandas._typing import FilePathOrBuffer
 
@@ -22,24 +20,8 @@ intermediate_data_path = (Path(__file__) / "../../../data/intermediate").resolve
 processed_data_path = (Path(__file__) / "../../../data/processed").resolve()
 
 
-def merge_deep_dict(user, default):
-    if isinstance(user, dict) and isinstance(default, dict):
-        for k, v in default.items():
-            user[k] = v if k not in user else merge_deep_dict(user[k], v)
-    return user
-
-
-default_params = {"prepare": {"split": 0.2}}
-if Path("params.yaml").exists():
-    with open("params.yaml", "r") as fd:
-        params = yaml.safe_load(fd)
-        params = merge_deep_dict(params, default_params)
-else:
-    params = default_params
-
-
 class GenerationData:
-    def __init__(self, raw_file_path: Path = raw_data_path / HELEN_DATA_FILENAME):
+    def __init__(self, raw_file_path):
         self.raw_file_path = raw_file_path
 
     @classmethod
@@ -62,12 +44,11 @@ class GenerationData:
 
     def load_and_clean(self) -> DataFrame:
         """
-        Load dataset from disk, clean up features
+        Load dataframe from disk, clean up features
 
-        :param raw_file_path: local file path for raw data
         :return: Pandas dataframe, with index column 'date_time' and feature column 'dh_MWh'
         """
-        logging.info("Load Helen raw dataset from CSV, clean up file")
+        logging.info("Load Helen raw dataframe from CSV, clean up file")
         df = pd.read_csv(
             self.raw_file_path,
             sep=";",
@@ -76,6 +57,24 @@ class GenerationData:
             dayfirst=True,
         ).set_index("date_time")
         df.index = df.index.tz_localize(tz="Europe/Helsinki", ambiguous="infer")
+        return df
+
+    @staticmethod
+    def read_helen(
+        raw_file_path: Path = raw_data_path / HELEN_DATA_FILENAME,
+        intermediate_file_path: Path = intermediate_data_path
+        / HELEN_INTERMEDIATE_FILENAME,
+    ) -> DataFrame:
+        logging.info("Read Helen data")
+
+        if intermediate_file_path.exists():
+            logging.info("Intermediate file exists, read from there")
+            return load_intermediate(intermediate_file_path=intermediate_file_path)
+
+        logging.info(f"Process from raw data, {raw_file_path=}")
+        generation_data = GenerationData(raw_file_path=raw_file_path)
+        df: DataFrame = generation_data.load_and_clean()
+        save_intermediate(df, intermediate_file_path=intermediate_file_path)
         return df
 
 
@@ -132,15 +131,25 @@ class FmiData:
         d.index = d.index.tz_localize("UTC").tz_convert("Europe/Helsinki")
         return d
 
+    @staticmethod
+    def read_fmi(
+        station_name="Kaisaniemi",
+        intermediate_file_path: Path = intermediate_data_path
+        / WEATHER_INTERMEDIATE_FILENAME.format(station="Kaisaniemi"),
+    ) -> DataFrame:
+        logging.info("Read FMI data")
 
-def train_test_split_time(
-    df: DataFrame, test_size: float = params["prepare"]["split"]
-) -> Tuple[DataFrame, DataFrame]:
-    all_data = df.sort_index()
-    split_idx = int(len(all_data) * (1 - test_size))
-    train = df[:split_idx]
-    test = df[split_idx:]
-    return train, test
+        if intermediate_file_path.exists():
+            logging.info("Intermediate file exists, read from there")
+            return load_intermediate(intermediate_file_path=intermediate_file_path)
+
+        logging.info("Process from raw data")
+        fmi_data = FmiData(
+            *[(raw_data_path / i) for i in fmi_weather_files[station_name]]
+        )
+        df: DataFrame = fmi_data.load_and_clean()
+        save_intermediate(df, intermediate_file_path=intermediate_file_path)
+        return df
 
 
 def save_intermediate(
@@ -183,40 +192,6 @@ def load_intermediate(
     return df
 
 
-def read_fmi(
-    station_name="Kaisaniemi",
-    intermediate_file_path: Path = intermediate_data_path
-    / WEATHER_INTERMEDIATE_FILENAME.format(station="Kaisaniemi"),
-) -> DataFrame:
-    logging.info("Read FMI data")
-
-    if intermediate_file_path.exists():
-        logging.info("Intermediate file exists, read from there")
-        return load_intermediate(intermediate_file_path=intermediate_file_path)
-
-    logging.info("Process from raw data")
-    fmi_data = FmiData(*[(raw_data_path / i) for i in fmi_weather_files[station_name]])
-    df: DataFrame = fmi_data.load_and_clean()
-    save_intermediate(df, intermediate_file_path=intermediate_file_path)
-    return df
-
-
-def read_helen(
-    intermediate_file_path: Path = intermediate_data_path / HELEN_INTERMEDIATE_FILENAME,
-) -> DataFrame:
-    logging.info("Read Helen data")
-
-    if intermediate_file_path.exists():
-        logging.info("Intermediate file exists, read from there")
-        return load_intermediate(intermediate_file_path=intermediate_file_path)
-
-    logging.info("Process from raw data")
-    generation_data = GenerationData()
-    df: DataFrame = generation_data.load_and_clean()
-    save_intermediate(df, intermediate_file_path=intermediate_file_path)
-    return df
-
-
 def merge_dataframes(
     df_helen: DataFrame,
     df_fmi: DataFrame,
@@ -233,6 +208,6 @@ def merge_dataframes(
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    df_fmi = read_fmi()[["Ilman lämpötila (degC)"]]
-    df_helen = read_helen()
-    merge_dataframes(df_helen=df_helen, df_fmi=df_fmi)
+    df_weather = FmiData.read_fmi()[["Ilman lämpötila (degC)"]]
+    df_generation = GenerationData.read_helen()
+    merge_dataframes(df_helen=df_generation, df_fmi=df_weather)

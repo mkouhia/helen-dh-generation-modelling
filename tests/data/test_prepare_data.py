@@ -9,8 +9,6 @@ from dh_modelling.data.prepare_data import (
     GenerationData,
     load_intermediate,
     merge_dataframes,
-    read_fmi,
-    read_helen,
     save_intermediate,
 )
 
@@ -24,7 +22,7 @@ def test_read_fmi_intermediate(tmp_path, mocker):
     mocker.patch(
         "dh_modelling.data.prepare_data.load_intermediate", return_value=expected
     )
-    received = read_fmi(intermediate_file_path=intermediate_file_path)
+    received = FmiData.read_fmi(intermediate_file_path=intermediate_file_path)
 
     assert_frame_equal(received, expected)
 
@@ -39,7 +37,7 @@ def test_read_fmi_raw(tmp_path, mocker):
     )
     mocker.patch("dh_modelling.data.prepare_data.save_intermediate")
 
-    received = read_fmi(intermediate_file_path=intermediate_file_path)
+    received = FmiData.read_fmi(intermediate_file_path=intermediate_file_path)
 
     assert_frame_equal(received, expected)
 
@@ -53,7 +51,7 @@ def test_read_helen_intermediate(tmp_path, mocker):
     mocker.patch(
         "dh_modelling.data.prepare_data.load_intermediate", return_value=expected
     )
-    received = read_helen(intermediate_file_path=intermediate_file_path)
+    received = GenerationData.read_helen(intermediate_file_path=intermediate_file_path)
 
     assert_frame_equal(received, expected)
 
@@ -69,7 +67,7 @@ def test_read_helen_raw(tmp_path, mocker):
     )
     mocker.patch("dh_modelling.data.prepare_data.save_intermediate")
 
-    received = read_helen(intermediate_file_path=intermediate_file_path)
+    received = GenerationData.read_helen(intermediate_file_path=intermediate_file_path)
 
     assert_frame_equal(received, expected)
 
