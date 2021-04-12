@@ -8,7 +8,7 @@ from dh_modelling.data.prepare_data import (
     FmiData,
     GenerationData,
     merge_dataframes,
-    save_intermediate,
+    save_dataframe,
 )
 
 
@@ -37,7 +37,7 @@ def test_read_helen_raw(tmp_path, mocker):
     assert_frame_equal(received, expected)
 
 
-def test_merge_helen_fmi(mocker):
+def test_merge_helen_fmi():
     fmi_content = """date_time,Pilvien määrä (1/8),Ilmanpaine (msl) (hPa),Sademäärä (mm),Suhteellinen kosteus (%),Sateen intensiteetti (mm/h),Lumensyvyys (cm),Ilman lämpötila (degC),Kastepistelämpötila (degC),Näkyvyys (m),Tuulen suunta (deg),Puuskanopeus (m/s),Tuulen nopeus (m/s)
     2014-12-01 00:00+00:00,5,1033.2,0,92,0,0,-2.9,-4,,341,1.8,1.3
     2014-12-01 01:00+00:00,0,1032.8,0,94,0,0,-4,-4.8,,351,1.9,1.3
@@ -89,8 +89,6 @@ def test_merge_helen_fmi(mocker):
         to_datetime(expected["date_time"], utc=True)
     ).tz_convert("Europe/Helsinki")
     expected = expected.drop("date_time", axis=1)
-
-    mocker.patch("dh_modelling.data.prepare_data.save_intermediate")
 
     received = merge_dataframes(
         df_helen=df_helen, df_fmi=df_fmi[["Ilman lämpötila (degC)"]]
@@ -218,7 +216,7 @@ def test_save_and_load_intermediate(tmp_path):
     original = original.drop("date_time", axis=1)
 
     fpath = tmp_path / "test.feather"
-    save_intermediate(original, intermediate_file_path=fpath)
+    save_dataframe(original, file_path=fpath)
     assert fpath.exists()
 
     received: DataFrame = read_feather(fpath)

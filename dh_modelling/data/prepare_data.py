@@ -1,11 +1,15 @@
 import logging
+import os
 from datetime import datetime
-from os import PathLike
 from pathlib import Path
+from typing import Union
 
 import pandas as pd
 import requests
 from pandas import DataFrame, DatetimeIndex, concat, merge, read_csv
+
+PathLike = Union[Path, os.PathLike]
+
 
 HELEN_DATA_URL = (
     "https://www.helen.fi/globalassets/helen-oy/vastuullisuus/hki_dh_2015_2020_a.csv"
@@ -131,40 +135,31 @@ class FmiData:
         return fmi_data.load_and_clean()
 
 
-def save_intermediate(
-    df: DataFrame, intermediate_file_path: Path, reset_datetime_index: bool = True
-):
+def save_dataframe(df: DataFrame, file_path: Path, reset_datetime_index: bool = True):
     """
     Save intermediate representation of dataframe to disk
 
     :param df: dataframe to be saved
-    :param intermediate_file_path: intermediate file location
+    :param file_path: file location
     :param reset_datetime_index: reset datetime index to normal column, convert timestamp to UTC
     """
-    logging.info(f"Save intermediate dataset to {intermediate_file_path}")
+    logging.info(f"Save intermediate dataset to {file_path}")
     if reset_datetime_index:
         index_name: str = df.index.name
         df = df.reset_index()
         df[index_name] = DatetimeIndex(df[index_name]).tz_convert("UTC")
-    df.to_feather(intermediate_file_path)
+    df.to_feather(file_path)
 
 
-def merge_dataframes(
-    df_helen: DataFrame,
-    df_fmi: DataFrame,
-    save_master_data: bool = True,
-    file_path: Path = processed_data_path / MASTER_INTERMEDIATE_FILENAME,
-) -> DataFrame:
-
-    df = merge(df_helen, df_fmi, how="left", left_index=True, right_index=True)
-
-    if save_master_data:
-        save_intermediate(df, intermediate_file_path=file_path)
-    return df
+def merge_dataframes(df_helen: DataFrame, df_fmi: DataFrame) -> DataFrame:
+    return merge(df_helen, df_fmi, how="left", left_index=True, right_index=True)
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     df_weather = FmiData.read_fmi()[["Ilman lämpötila (degC)"]]
     df_generation = GenerationData.read_helen()
-    merge_dataframes(df_helen=df_generation, df_fmi=df_weather)
+    df_master: DataFrame = merge_dataframes(df_helen=df_generation, df_fmi=df_weather)
+    save_dataframe(
+        df_master, file_path=processed_data_path / MASTER_INTERMEDIATE_FILENAME
+    )
