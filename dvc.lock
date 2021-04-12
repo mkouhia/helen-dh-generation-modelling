@@ -28,8 +28,8 @@ stages:
       md5: a5ec283006abb2d2758d4aefb4b2d402
       size: 1293525
     - path: dh_modelling/data/prepare_data.py
-      md5: 47f4217fbbcd6587a4c6737ca6740799
-      size: 5769
+      md5: 9c75a9117ecfe6683b5aa579a540fd86
+      size: 5079
     params:
       params.yaml:
         prepare.split: 0.2

@@ -1,5 +1,4 @@
 from io import StringIO
-from pathlib import Path
 
 from pandas import DataFrame, DatetimeIndex, read_csv, read_feather, to_datetime
 from pandas._testing import assert_frame_equal
@@ -95,21 +94,6 @@ def test_merge_helen_fmi():
     )
 
     assert_frame_equal(received, expected)
-
-
-def test_from_url(tmp_path, requests_mock):
-    test_file_path: Path = tmp_path / "test.csv"
-
-    content = """date_time;dh_MWh
-    29.3.2015 2:00;919,913
-    29.3.2015 4:00;913,885
-    """
-
-    test_url = "http://240.0.0.0/download/test.csv"
-    requests_mock.get(test_url, text=content)
-
-    GenerationData.from_url(url=test_url, raw_file_path=test_file_path)
-    assert test_file_path.exists()
 
 
 def test_load_and_clean(tmp_path):

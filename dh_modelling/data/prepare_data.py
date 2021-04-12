@@ -5,15 +5,11 @@ from pathlib import Path
 from typing import Union
 
 import pandas as pd
-import requests
 from pandas import DataFrame, DatetimeIndex, concat, merge, read_csv
 
 PathLike = Union[Path, os.PathLike]
 
 
-HELEN_DATA_URL = (
-    "https://www.helen.fi/globalassets/helen-oy/vastuullisuus/hki_dh_2015_2020_a.csv"
-)
 HELEN_DATA_FILENAME = "hki_dh_2015_2020_a.csv"
 
 HELEN_INTERMEDIATE_FILENAME = "helen_cleaned.feather"
@@ -28,24 +24,6 @@ processed_data_path = (Path(__file__) / "../../../data/processed").resolve()
 class GenerationData:
     def __init__(self, raw_file_path):
         self.raw_file_path = raw_file_path
-
-    @classmethod
-    def from_url(
-        cls,
-        url: str = HELEN_DATA_URL,
-        raw_file_path: Path = raw_data_path / HELEN_DATA_FILENAME,
-    ):
-        """
-        Get DH data CSV, save to file
-
-        :param url: online location for data
-        :param raw_file_path: local file path for raw data
-        """
-        logging.info(f"Downloading Helen DH data from {url} to {raw_file_path}")
-        r = requests.get(url)
-        with raw_file_path.open("wb") as f:
-            f.write(r.content)
-        return cls(raw_file_path)
 
     def load_and_clean(self) -> DataFrame:
         """
