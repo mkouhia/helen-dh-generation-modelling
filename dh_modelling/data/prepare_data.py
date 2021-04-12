@@ -157,7 +157,7 @@ def merge_dataframes(df_helen: DataFrame, df_fmi: DataFrame) -> DataFrame:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    df_weather = FmiData.read_fmi()[["Ilman lämpötila (degC)"]]
+    df_weather = FmiData.read_fmi()
     df_generation = GenerationData.read_helen()
     df_master: DataFrame = merge_dataframes(df_helen=df_generation, df_fmi=df_weather)
     save_dataframe(
