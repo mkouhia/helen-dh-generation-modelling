@@ -1,73 +1,38 @@
 from io import StringIO
 from pathlib import Path
 
-from pandas import DataFrame, DatetimeIndex, read_csv, to_datetime
+from pandas import DataFrame, DatetimeIndex, read_csv, read_feather, to_datetime
 from pandas._testing import assert_frame_equal
 
 from dh_modelling.data.prepare_data import (
     FmiData,
     GenerationData,
-    load_intermediate,
     merge_dataframes,
     save_intermediate,
 )
 
 
-def test_read_fmi_intermediate(tmp_path, mocker):
-    intermediate_file_path = tmp_path / "test.file"
-    intermediate_file_path.touch()
-
-    expected = DataFrame({"x": [1, 2]})
-
-    mocker.patch(
-        "dh_modelling.data.prepare_data.load_intermediate", return_value=expected
-    )
-    received = FmiData.read_fmi(intermediate_file_path=intermediate_file_path)
-
-    assert_frame_equal(received, expected)
-
-
 def test_read_fmi_raw(tmp_path, mocker):
-    intermediate_file_path = tmp_path / "test.file"
-
     expected = DataFrame({"x": [1, 2]})
 
     mocker.patch(
         "dh_modelling.data.prepare_data.FmiData.load_and_clean", return_value=expected
     )
-    mocker.patch("dh_modelling.data.prepare_data.save_intermediate")
 
-    received = FmiData.read_fmi(intermediate_file_path=intermediate_file_path)
-
-    assert_frame_equal(received, expected)
-
-
-def test_read_helen_intermediate(tmp_path, mocker):
-    intermediate_file_path = tmp_path / "test.file"
-    intermediate_file_path.touch()
-
-    expected = DataFrame({"x": [1, 2]})
-
-    mocker.patch(
-        "dh_modelling.data.prepare_data.load_intermediate", return_value=expected
-    )
-    received = GenerationData.read_helen(intermediate_file_path=intermediate_file_path)
+    received = FmiData.read_fmi()
 
     assert_frame_equal(received, expected)
 
 
 def test_read_helen_raw(tmp_path, mocker):
-    intermediate_file_path = tmp_path / "test.file"
-
     expected = DataFrame({"x": [1, 2]})
 
     mocker.patch(
         "dh_modelling.data.prepare_data.GenerationData.load_and_clean",
         return_value=expected,
     )
-    mocker.patch("dh_modelling.data.prepare_data.save_intermediate")
 
-    received = GenerationData.read_helen(intermediate_file_path=intermediate_file_path)
+    received = GenerationData.read_helen()
 
     assert_frame_equal(received, expected)
 
@@ -256,6 +221,8 @@ def test_save_and_load_intermediate(tmp_path):
     save_intermediate(original, intermediate_file_path=fpath)
     assert fpath.exists()
 
-    received: DataFrame = load_intermediate(intermediate_file_path=fpath)
+    received: DataFrame = read_feather(fpath)
+    received.index = DatetimeIndex(received["date_time"]).tz_convert("Europe/Helsinki")
+    received = received.drop("date_time", axis=1)
 
     assert_frame_equal(original, received)

@@ -1,10 +1,11 @@
 import logging
+from datetime import datetime
+from os import PathLike
 from pathlib import Path
 
 import pandas as pd
 import requests
 from pandas import DataFrame, DatetimeIndex, concat, merge, read_csv
-from pandas._typing import FilePathOrBuffer
 
 HELEN_DATA_URL = (
     "https://www.helen.fi/globalassets/helen-oy/vastuullisuus/hki_dh_2015_2020_a.csv"
@@ -54,7 +55,7 @@ class GenerationData:
             sep=";",
             decimal=",",
             parse_dates=["date_time"],
-            dayfirst=True,
+            date_parser=lambda x: datetime.strptime(x, "%d.%m.%Y %H:%M"),
         ).set_index("date_time")
         df.index = df.index.tz_localize(tz="Europe/Helsinki", ambiguous="infer")
         return df
@@ -62,20 +63,10 @@ class GenerationData:
     @staticmethod
     def read_helen(
         raw_file_path: Path = raw_data_path / HELEN_DATA_FILENAME,
-        intermediate_file_path: Path = intermediate_data_path
-        / HELEN_INTERMEDIATE_FILENAME,
     ) -> DataFrame:
-        logging.info("Read Helen data")
-
-        if intermediate_file_path.exists():
-            logging.info("Intermediate file exists, read from there")
-            return load_intermediate(intermediate_file_path=intermediate_file_path)
-
-        logging.info(f"Process from raw data, {raw_file_path=}")
+        logging.info(f"Read Helen generation data, {raw_file_path=}")
         generation_data = GenerationData(raw_file_path=raw_file_path)
-        df: DataFrame = generation_data.load_and_clean()
-        save_intermediate(df, intermediate_file_path=intermediate_file_path)
-        return df
+        return generation_data.load_and_clean()
 
 
 fmi_weather_files = {
@@ -92,7 +83,7 @@ fmi_weather_files = {
 
 
 class FmiData:
-    def __init__(self, *raw_file_paths: Path):
+    def __init__(self, *raw_file_paths: PathLike):
         """
         Create data loader, from multiple data files mapping to **same weather station**
 
@@ -115,14 +106,14 @@ class FmiData:
         return df
 
     @staticmethod
-    def read_file(filename: FilePathOrBuffer) -> DataFrame:
+    def read_file(filepath_or_buffer: PathLike) -> DataFrame:
         """
         Read FMI weather data into pandas data frame
         """
-        logging.info(f"Read FMI weather data: {filename=}")
-        d = read_csv(filename, parse_dates=[["Vuosi", "Kk", "Pv", "Klo"]]).rename(
-            columns={"Vuosi_Kk_Pv_Klo": "date_time"}
-        )
+        logging.info(f"Read FMI weather data: {filepath_or_buffer=}")
+        d = read_csv(
+            filepath_or_buffer, parse_dates=[["Vuosi", "Kk", "Pv", "Klo"]]
+        ).rename(columns={"Vuosi_Kk_Pv_Klo": "date_time"})
 
         assert (d["Aikavyöhyke"] == "UTC").all()
 
@@ -132,24 +123,12 @@ class FmiData:
         return d
 
     @staticmethod
-    def read_fmi(
-        station_name="Kaisaniemi",
-        intermediate_file_path: Path = intermediate_data_path
-        / WEATHER_INTERMEDIATE_FILENAME.format(station="Kaisaniemi"),
-    ) -> DataFrame:
-        logging.info("Read FMI data")
-
-        if intermediate_file_path.exists():
-            logging.info("Intermediate file exists, read from there")
-            return load_intermediate(intermediate_file_path=intermediate_file_path)
-
-        logging.info("Process from raw data")
+    def read_fmi(station_name="Kaisaniemi") -> DataFrame:
+        logging.info(f"Read FMI data, {station_name=}")
         fmi_data = FmiData(
             *[(raw_data_path / i) for i in fmi_weather_files[station_name]]
         )
-        df: DataFrame = fmi_data.load_and_clean()
-        save_intermediate(df, intermediate_file_path=intermediate_file_path)
-        return df
+        return fmi_data.load_and_clean()
 
 
 def save_intermediate(
@@ -168,28 +147,6 @@ def save_intermediate(
         df = df.reset_index()
         df[index_name] = DatetimeIndex(df[index_name]).tz_convert("UTC")
     df.to_feather(intermediate_file_path)
-
-
-def load_intermediate(
-    intermediate_file_path: Path,
-    set_datetime_index: bool = True,
-    date_time_column: str = "date_time",
-    timezone: str = "Europe/Helsinki",
-) -> DataFrame:
-    """
-    Load pre-saved intermediate file from disk
-
-    :param intermediate_file_path: intermediate file location
-    :param set_datetime_index: set DatetimeIndex from column 'date_time_column' with timezone 'timezone'
-    :param date_time_column: column, which should be set as index
-    :param timezone: timezone, at which date_time_column is converted
-    :return: loaded dataframe, with 'date_time' as index
-    """
-    df: DataFrame = pd.read_feather(intermediate_file_path)
-    if set_datetime_index:
-        df.index = DatetimeIndex(df[date_time_column]).tz_convert(timezone)
-        df = df.drop("date_time", axis=1)
-    return df
 
 
 def merge_dataframes(
