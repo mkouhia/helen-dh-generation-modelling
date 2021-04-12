@@ -28,12 +28,15 @@ stages:
       md5: a5ec283006abb2d2758d4aefb4b2d402
       size: 1293525
     - path: dh_modelling/data/prepare_data.py
-      md5: 9c75a9117ecfe6683b5aa579a540fd86
-      size: 5079
+      md5: 0de4d1e5aeecb19cb8c07a6fa658ee66
+      size: 5881
     params:
       params.yaml:
         prepare.split: 0.2
     outs:
     - path: data/processed/master.feather
-      md5: caa2ca465d74f1d9fc0cf216ea2bb6e0
-      size: 1989090
+      md5: 11c1e26c55dfc705cbc5d05df8f10b5f
+      size: 1579442
+    - path: data/processed/test.feather
+      md5: a4be55fdb537f2d25929809341ba2bd5
+      size: 139378

@@ -2,7 +2,7 @@ import logging
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Union
+from typing import Tuple, Union
 
 import pandas as pd
 from pandas import DataFrame, DatetimeIndex, concat, merge, read_csv
@@ -15,6 +15,7 @@ HELEN_DATA_FILENAME = "hki_dh_2015_2020_a.csv"
 HELEN_INTERMEDIATE_FILENAME = "helen_cleaned.feather"
 WEATHER_INTERMEDIATE_FILENAME = "weather_{station}.feather"
 MASTER_INTERMEDIATE_FILENAME = "master.feather"
+TEST_FILENAME = "test.feather"
 
 raw_data_path = (Path(__file__) / "../../../data/raw").resolve()
 intermediate_data_path = (Path(__file__) / "../../../data/intermediate").resolve()
@@ -130,14 +131,38 @@ def save_dataframe(df: DataFrame, file_path: Path, reset_datetime_index: bool = 
 
 
 def merge_dataframes(df_helen: DataFrame, df_fmi: DataFrame) -> DataFrame:
+    logging.info("Left join fmi on helen")
     return merge(df_helen, df_fmi, how="left", left_index=True, right_index=True)
+
+
+def train_test_split_sorted(
+    df: DataFrame, test_size: float = 0.2
+) -> Tuple[DataFrame, DataFrame]:
+    """
+    Split train/test data, by sorting data on index and taking last data points as test
+
+    :param df: input dataframe
+    :param test_size: fraction of test size of all points
+    :return: train, test
+    """
+    logging.info(f"Perform train/test split, {test_size=}")
+    all_data = df.sort_index()
+    split_idx = int(len(all_data) * (1 - test_size))
+    train = all_data[:split_idx]
+    test = all_data[split_idx:]
+    return train, test
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
+
     df_weather = FmiData.read_fmi()
     df_generation = GenerationData.read_helen()
-    df_master: DataFrame = merge_dataframes(df_helen=df_generation, df_fmi=df_weather)
+
+    gen_train, gen_test = train_test_split_sorted(df_generation)
+
+    df_master: DataFrame = merge_dataframes(df_helen=gen_train, df_fmi=df_weather)
     save_dataframe(
         df_master, file_path=processed_data_path / MASTER_INTERMEDIATE_FILENAME
     )
+    save_dataframe(gen_test, file_path=processed_data_path / TEST_FILENAME)

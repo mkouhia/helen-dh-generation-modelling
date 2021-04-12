@@ -15,3 +15,4 @@ stages:
     - prepare.split
     outs:
     - data/processed/master.feather
+    - data/processed/test.feather
