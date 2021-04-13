@@ -241,7 +241,7 @@ if __name__ == "__main__":
         "--master-path",
         help="Where to save master dataframe",
         type=Path,
-        default=Path("data/processed/master.feather"),
+        default=Path("data/intermediate/master.feather"),
     )
 
     args = parser.parse_args()

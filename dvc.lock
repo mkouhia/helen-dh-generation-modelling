@@ -3,7 +3,7 @@ stages:
   prepare:
     cmd: python dh_modelling/prepare.py --split 0.2 --helen-path data/raw/hki_dh_2015_2020_a.csv
       --fmi-dir data/raw/fmi --fmi-station-name "Helsinki Kaisaniemi" --test-path
-      data/processed/test.feather --master-path data/processed/master.feather
+      data/processed/test.feather --master-path data/intermediate/master.feather
     deps:
     - path: data/raw/fmi
       md5: b88efcc82005efece1517ceb2f366cbc.dir
@@ -13,12 +13,26 @@ stages:
       md5: a5ec283006abb2d2758d4aefb4b2d402
       size: 1293525
     - path: dh_modelling/prepare.py
-      md5: 0ef4b713f4a5219471df150cb610f688
-      size: 9209
+      md5: a93c13a44311199fb44850fc9b04c18c
+      size: 9212
     outs:
-    - path: data/processed/master.feather
+    - path: data/intermediate/master.feather
       md5: d5f2ec96bff343baab75cf71869061f6
       size: 1579442
     - path: data/processed/test.feather
       md5: c56de25731cc010fc0c26b13bc76eae8
       size: 139378
+  featurize:
+    cmd: python dh_modelling/featurize.py --master-path data/intermediate/master.feather
+      --train-path data/processed/train.feather
+    deps:
+    - path: data/intermediate/master.feather
+      md5: d5f2ec96bff343baab75cf71869061f6
+      size: 1579442
+    - path: dh_modelling/featurize.py
+      md5: 5b2cdb3955e1dfe6b1731ef7ddceef25
+      size: 2485
+    outs:
+    - path: data/processed/train.feather
+      md5: d5f2ec96bff343baab75cf71869061f6
+      size: 1579442

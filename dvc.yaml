@@ -3,8 +3,10 @@ vars:
       helen: data/raw/hki_dh_2015_2020_a.csv
       fmi-dir: data/raw/fmi
       test: data/processed/test.feather
-      master: data/processed/master.feather
+      master: data/intermediate/master.feather
+      train: data/processed/train.feather
   - fmi-station-name: 'Helsinki Kaisaniemi'
+
 stages:
   prepare:
     cmd: >-
@@ -22,3 +24,14 @@ stages:
     outs:
     - ${file-paths.test}
     - ${file-paths.master}
+
+  featurize:
+    cmd: >-
+      python dh_modelling/featurize.py
+      --master-path ${file-paths.master}
+      --train-path ${file-paths.train}
+    deps:
+    - ${file-paths.master}
+    - dh_modelling/featurize.py
+    outs:
+    - ${file-paths.train}
