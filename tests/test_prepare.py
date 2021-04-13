@@ -52,19 +52,6 @@ Helsinki Kaisaniemi,100971,60.17523,24.94459,2017-01-01T01:00:00.000Z,2018-01-01
     assert received == expected
 
 
-def test_read_helen_raw(tmp_path, mocker):
-    expected = DataFrame({"x": [1, 2]})
-
-    mocker.patch(
-        "dh_modelling.prepare.GenerationData.load_and_clean",
-        return_value=expected,
-    )
-
-    received = GenerationData.read_helen(raw_file_path=tmp_path / "mocked")
-
-    assert_frame_equal(received, expected)
-
-
 def test_merge_helen_fmi():
     fmi_content = """date_time,Pilvien määrä (1/8),Ilmanpaine (msl) (hPa),Sademäärä (mm),Suhteellinen kosteus (%),Sateen intensiteetti (mm/h),Lumensyvyys (cm),Ilman lämpötila (degC),Kastepistelämpötila (degC),Näkyvyys (m),Tuulen suunta (deg),Puuskanopeus (m/s),Tuulen nopeus (m/s)
     2014-12-01 00:00+00:00,5,1033.2,0,92,0,0,-2.9,-4,,341,1.8,1.3

@@ -24,7 +24,7 @@ class GenerationData:
 
         :return: Pandas dataframe, with index column 'date_time' and feature column 'dh_MWh'
         """
-        logging.info("Load Helen raw dataframe from CSV, clean up file")
+        logging.info(f"Load and clean Helen raw dataframe from {self.raw_file_path}")
         df = pd.read_csv(
             self.raw_file_path,
             sep=";",
@@ -34,12 +34,6 @@ class GenerationData:
         ).set_index("date_time")
         df.index = df.index.tz_localize(tz="Europe/Helsinki", ambiguous="infer")
         return df
-
-    @staticmethod
-    def read_helen(raw_file_path: Path) -> DataFrame:
-        logging.info(f"Read Helen generation data, {raw_file_path=}")
-        generation_data = GenerationData(raw_file_path=raw_file_path)
-        return generation_data.load_and_clean()
 
 
 class FmiData:
@@ -236,7 +230,9 @@ if __name__ == "__main__":
         directory=args.fmi_dir.absolute(), station_name=args.fmi_station_name
     )
     df_weather = fmi_loader.load_and_clean()
-    df_generation = GenerationData.read_helen(raw_file_path=args.helen_path.absolute())
+
+    generation_loader = GenerationData(raw_file_path=args.helen_path.absolute())
+    df_generation: DataFrame = generation_loader.load_and_clean()
     df_all: DataFrame = merge_dataframes(df_helen=df_generation, df_fmi=df_weather)
 
     train, test = train_test_split_sorted(df_all, test_size=args.split)
