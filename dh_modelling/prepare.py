@@ -9,7 +9,9 @@ from os import PathLike
 from pathlib import Path
 
 import pandas as pd
-from pandas import DataFrame, DatetimeIndex, concat, merge, read_csv
+from pandas import DataFrame, concat, merge, read_csv
+
+from .helpers import save_intermediate
 
 
 class GenerationData:
@@ -164,22 +166,6 @@ class FmiMeta:
         )
 
 
-def save_dataframe(df: DataFrame, file_path: Path, reset_datetime_index: bool = True):
-    """
-    Save intermediate representation of dataframe to disk
-
-    :param df: dataframe to be saved
-    :param file_path: file location
-    :param reset_datetime_index: reset datetime index to normal column, convert timestamp to UTC
-    """
-    logging.info(f"Save intermediate dataset to {file_path}")
-    if reset_datetime_index:
-        index_name: str = df.index.name
-        df = df.reset_index()
-        df[index_name] = DatetimeIndex(df[index_name]).tz_convert("UTC")
-    df.to_feather(file_path)
-
-
 def merge_dataframes(df_helen: DataFrame, df_fmi: DataFrame) -> DataFrame:
     logging.info("Left join fmi on helen")
     return merge(df_helen, df_fmi, how="left", left_index=True, right_index=True)
@@ -251,9 +237,8 @@ if __name__ == "__main__":
     )
     df_weather = fmi_loader.load_and_clean()
     df_generation = GenerationData.read_helen(raw_file_path=args.helen_path.absolute())
+    df_all: DataFrame = merge_dataframes(df_helen=df_generation, df_fmi=df_weather)
 
-    gen_train, gen_test = train_test_split_sorted(df_generation, test_size=args.split)
-    save_dataframe(gen_test, file_path=args.test_path.absolute())
-
-    df_master: DataFrame = merge_dataframes(df_helen=gen_train, df_fmi=df_weather)
-    save_dataframe(df_master, file_path=args.master_path.absolute())
+    train, test = train_test_split_sorted(df_all, test_size=args.split)
+    save_intermediate(train, path=args.master_path.absolute())
+    save_intermediate(test, path=args.test_path.absolute())

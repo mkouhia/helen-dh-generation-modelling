@@ -1,7 +1,7 @@
 schema: '2.0'
 stages:
   prepare:
-    cmd: python dh_modelling/prepare.py --split 0.2 --helen-path data/raw/hki_dh_2015_2020_a.csv
+    cmd: python -m dh_modelling.prepare --split 0.2 --helen-path data/raw/hki_dh_2015_2020_a.csv
       --fmi-dir data/raw/fmi --fmi-station-name "Helsinki Kaisaniemi" --test-path
       data/processed/test.feather --master-path data/intermediate/master.feather
     deps:
@@ -13,26 +13,57 @@ stages:
       md5: a5ec283006abb2d2758d4aefb4b2d402
       size: 1293525
     - path: dh_modelling/prepare.py
-      md5: a93c13a44311199fb44850fc9b04c18c
-      size: 9212
+      md5: 27fa5d22de528936d8dbd025332446b0
+      size: 8598
     outs:
     - path: data/intermediate/master.feather
       md5: d5f2ec96bff343baab75cf71869061f6
       size: 1579442
     - path: data/processed/test.feather
-      md5: c56de25731cc010fc0c26b13bc76eae8
-      size: 139378
+      md5: ca8984ad77562bf23b7a53aa43143557
+      size: 422634
   featurize:
-    cmd: python dh_modelling/featurize.py --master-path data/intermediate/master.feather
+    cmd: python -m dh_modelling.featurize --master-path data/intermediate/master.feather
       --train-path data/processed/train.feather
     deps:
     - path: data/intermediate/master.feather
       md5: d5f2ec96bff343baab75cf71869061f6
       size: 1579442
     - path: dh_modelling/featurize.py
-      md5: 5b2cdb3955e1dfe6b1731ef7ddceef25
-      size: 2485
+      md5: 021d9a7e54166d83891b690e15fdecca
+      size: 1176
     outs:
     - path: data/processed/train.feather
       md5: d5f2ec96bff343baab75cf71869061f6
       size: 1579442
+  train:
+    cmd: python -m dh_modelling.train --train-path data/processed/train.feather --model-path
+      models/model.joblib
+    deps:
+    - path: data/processed/train.feather
+      md5: d5f2ec96bff343baab75cf71869061f6
+      size: 1579442
+    - path: dh_modelling/train.py
+      md5: d1523f8626231fdecc8850bd4cd26d1a
+      size: 1194
+    outs:
+    - path: models/model.joblib
+      md5: ff139e72ff51675e1ca194a59e2c7e56
+      size: 246
+  evaluate:
+    cmd: python -m dh_modelling.evaluate --model-path models/model.joblib --test-path
+      data/processed/test.feather --metrics-path output/score.json
+    deps:
+    - path: data/processed/test.feather
+      md5: ca8984ad77562bf23b7a53aa43143557
+      size: 422634
+    - path: dh_modelling/evaluate.py
+      md5: bef2784eab8dd3926f7c11dc43094317
+      size: 2097
+    - path: models/model.joblib
+      md5: ff139e72ff51675e1ca194a59e2c7e56
+      size: 246
+    outs:
+    - path: output/score.json
+      md5: 04c095774c87c94944eb03686a280f12
+      size: 143

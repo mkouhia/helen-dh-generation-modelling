@@ -1,15 +1,14 @@
 from datetime import datetime, timezone
 from io import StringIO
 
-from pandas import DataFrame, DatetimeIndex, read_csv, read_feather, to_datetime
-from pandas._testing import assert_frame_equal
+from pandas import DataFrame, DatetimeIndex, read_csv, to_datetime
+from pandas.testing import assert_frame_equal
 
 from dh_modelling.prepare import (
     FmiData,
     FmiMeta,
     GenerationData,
     merge_dataframes,
-    save_dataframe,
     train_test_split_sorted,
 )
 
@@ -209,35 +208,6 @@ def test_load_and_clean_fmi(tmp_path):
     received: DataFrame = data.load_and_clean()
 
     assert_frame_equal(received, expected)
-
-
-def test_save_and_load_intermediate(tmp_path):
-    original = DataFrame(
-        data={
-            "date_time": [
-                "2015-03-29 00:00:00+02:00",
-                "2015-03-29 01:00:00+02:00",
-            ],
-            "dh_MWh": [
-                958.673,
-                930.965,
-            ],
-        }
-    )
-    original.index = DatetimeIndex(
-        to_datetime(original["date_time"], utc=True)
-    ).tz_convert("Europe/Helsinki")
-    original = original.drop("date_time", axis=1)
-
-    fpath = tmp_path / "test.feather"
-    save_dataframe(original, file_path=fpath)
-    assert fpath.exists()
-
-    received: DataFrame = read_feather(fpath)
-    received.index = DatetimeIndex(received["date_time"]).tz_convert("Europe/Helsinki")
-    received = received.drop("date_time", axis=1)
-
-    assert_frame_equal(original, received)
 
 
 def test_train_test_split_sorted():
