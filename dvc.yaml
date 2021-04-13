@@ -1,12 +1,14 @@
 vars:
   - file-paths:
       test: data/processed/test.feather
+      master: data/processed/master.feather
 stages:
   prepare:
     cmd: >-
       python dh_modelling/data/prepare_data.py
       --split ${prepare.split}
       --test-path ${file-paths.test}
+      --master-path ${file-paths.master}
     deps:
     - data/raw/csv-f2faff3e-672d-41a0-8bf3-278ab00d8796.csv
     - data/raw/csv-270db165-c228-466b-a438-69caa8c8f075.csv
@@ -18,5 +20,5 @@ stages:
     - data/raw/hki_dh_2015_2020_a.csv
     - dh_modelling/data/prepare_data.py
     outs:
-    - data/processed/master.feather
     - ${file-paths.test}
+    - ${file-paths.master}
