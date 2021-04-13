@@ -1,19 +1,15 @@
+from __future__ import annotations
+
 import argparse
 import logging
-import os
-from datetime import datetime
+import re
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from os import PathLike
 from pathlib import Path
-from typing import Tuple, Union
 
 import pandas as pd
 from pandas import DataFrame, DatetimeIndex, concat, merge, read_csv
-
-PathLike = Union[Path, os.PathLike]
-
-WEATHER_INTERMEDIATE_FILENAME = "weather_{station}.feather"
-
-raw_data_path = (Path(__file__) / "../../../data/raw").resolve()
-intermediate_data_path = (Path(__file__) / "../../../data/intermediate").resolve()
 
 
 class GenerationData:
@@ -44,27 +40,26 @@ class GenerationData:
         return generation_data.load_and_clean()
 
 
-fmi_weather_files = {
-    "Kaisaniemi": [
-        "csv-f2faff3e-672d-41a0-8bf3-278ab00d8796.csv",
-        "csv-270db165-c228-466b-a438-69caa8c8f075.csv",
-        "csv-c1047dd7-2a2c-4046-bae8-9835353aced4.csv",
-        "csv-9c60edf9-247b-4dc5-8b3d-d50137de4bdc.csv",
-        "csv-5bba8028-c209-48d8-a958-0764f0e927b1.csv",
-        "csv-563b0676-9825-4a09-a9fd-7095ade8dec6.csv",
-        "csv-f6c18948-8fac-45ac-ab2a-bb51173800dc.csv",
-    ]
-}
-
-
 class FmiData:
-    def __init__(self, *raw_file_paths: PathLike):
+    def __init__(self, station_name: str, *raw_file_paths: PathLike):
         """
         Create data loader, from multiple data files mapping to **same weather station**
 
+        :type station_name: name of station, where the data has been collected
         :param raw_file_paths: Location of CSV files, downloaded from FMI data service
         """
+        self.station_name = station_name
         self.raw_file_paths = raw_file_paths
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, FmiData):
+            return NotImplemented
+        return (self.station_name == other.station_name) and (
+            self.raw_file_paths == other.raw_file_paths
+        )
+
+    def __repr__(self) -> str:
+        return f"{self.__class__}({self.__dict__!r})"
 
     def load_and_clean(self) -> DataFrame:
         """
@@ -72,16 +67,16 @@ class FmiData:
         :return: Pandas dataframe, with index column 'datetime'
         """
         logging.info("Load and clean up data files")
-        frames = [self.read_file(f) for f in self.raw_file_paths]
+        frames = [self._read_file(f) for f in self.raw_file_paths]
         df = concat(frames)
         df = df.loc[~df.index.duplicated()]
 
         df["Ilman lämpötila (degC)"].interpolate(inplace=True)
 
-        return df
+        return df.sort_index()
 
     @staticmethod
-    def read_file(filepath_or_buffer: PathLike) -> DataFrame:
+    def _read_file(filepath_or_buffer: PathLike) -> DataFrame:
         """
         Read FMI weather data into pandas data frame
         """
@@ -98,12 +93,75 @@ class FmiData:
         return d
 
     @staticmethod
-    def read_fmi(station_name="Kaisaniemi") -> DataFrame:
+    def read_fmi_files(directory: Path, station_name: str) -> FmiData:
+        """
+        Read batch of FMI weather files and metadata from a directory
+
+        Go through the folder, find metadata files with pattern "csv-meta-(.+)\\.csv".
+        Read metadata files, see which IDs are from the desired station.
+        For stations that match, find files in the folder with pattern "csv-{id}.csv".
+        Read those files into dataframe.
+
+        :param directory: path to directory, where content is searched
+        :param station_name: Name of station, for which to assemble the dataframe
+        :return: dataframe, assembled from
+        """
         logging.info(f"Read FMI data, {station_name=}")
-        fmi_data = FmiData(
-            *[(raw_data_path / i) for i in fmi_weather_files[station_name]]
+        all_files = [fp for fp in directory.glob("*.csv") if fp.is_file()]
+        meta_pattern = re.compile("csv-meta-(.+)\\.csv")
+
+        meta_dict: dict[str, FmiMeta] = dict()
+        for f in all_files:
+            if (match := meta_pattern.match(f.name)) is not None:
+                meta_dict[match.group(1)] = FmiMeta.from_file(f)
+
+        station_files = [
+            (directory / f"csv-{id_str}.csv")
+            for id_str, meta_ob in meta_dict.items()
+            if (meta_ob.station_name == station_name)
+            and ((directory / f"csv-{id_str}.csv").is_file())
+        ]
+
+        logging.info(
+            f"Found {len(station_files)} metadata-csv file pairs for {station_name=}"
         )
-        return fmi_data.load_and_clean()
+
+        return FmiData(station_name, *station_files)
+
+
+@dataclass
+class FmiMeta:
+    station_name: str
+    station_code: int
+    latitude: float
+    longitude: float
+    start_time: datetime
+    end_time: datetime
+    creation_time: datetime
+
+    @classmethod
+    def from_file(cls, path: Path) -> FmiMeta:
+        content = path.read_text("utf8")
+        lines = content.split("\n")
+        assert len(lines) == 2
+        keys = lines[0].split(",")
+        values = lines[1].split(",")
+        d = dict(zip(keys, values))
+
+        def utc_string_to_datetime(s: str) -> datetime:
+            return datetime.fromisoformat(s.removesuffix("Z")).replace(
+                tzinfo=timezone.utc
+            )
+
+        return cls(
+            station_name=d["Havaintoasema"],
+            station_code=int(d["Asemakoodi"]),
+            latitude=float(d["Latitudi (desimaaliasteita)"]),
+            longitude=float(d["Longitudi (desimaaliasteita)"]),
+            start_time=utc_string_to_datetime(d["Alkuhetki"]),
+            end_time=utc_string_to_datetime(d["Loppuhetki"]),
+            creation_time=utc_string_to_datetime(d["Datan luontihetki"]),
+        )
 
 
 def save_dataframe(df: DataFrame, file_path: Path, reset_datetime_index: bool = True):
@@ -129,7 +187,7 @@ def merge_dataframes(df_helen: DataFrame, df_fmi: DataFrame) -> DataFrame:
 
 def train_test_split_sorted(
     df: DataFrame, test_size: float = 0.2
-) -> Tuple[DataFrame, DataFrame]:
+) -> tuple[DataFrame, DataFrame]:
     """
     Split train/test data, by sorting data on index and taking last data points as test
 
@@ -162,6 +220,18 @@ if __name__ == "__main__":
         default=Path("data/raw/hki_dh_2015_2020_a.csv"),
     )
     parser.add_argument(
+        "--fmi-dir",
+        help="Directory, where to read raw FMI weather files",
+        type=Path,
+        default=Path("data/raw/fmi"),
+    )
+    parser.add_argument(
+        "--fmi-station-name",
+        help="Station name, which to use in FMI csv lookup in fmi-dir",
+        type=str,
+        default="Helsinki Kaisaniemi",
+    )
+    parser.add_argument(
         "--test-path",
         help="Where to save test dataframe",
         type=Path,
@@ -176,7 +246,10 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    df_weather = FmiData.read_fmi()
+    fmi_loader: FmiData = FmiData.read_fmi_files(
+        directory=args.fmi_dir.absolute(), station_name=args.fmi_station_name
+    )
+    df_weather = fmi_loader.load_and_clean()
     df_generation = GenerationData.read_helen(raw_file_path=args.helen_path.absolute())
 
     gen_train, gen_test = train_test_split_sorted(df_generation, test_size=args.split)

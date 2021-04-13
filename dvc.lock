@@ -2,39 +2,23 @@ schema: '2.0'
 stages:
   prepare:
     cmd: python dh_modelling/data/prepare_data.py --split 0.2 --helen-path data/raw/hki_dh_2015_2020_a.csv
-      --test-path data/processed/test.feather --master-path data/processed/master.feather
+      --fmi-dir data/raw/fmi --fmi-station-name "Helsinki Kaisaniemi" --test-path
+      data/processed/test.feather --master-path data/processed/master.feather
     deps:
-    - path: data/raw/csv-270db165-c228-466b-a438-69caa8c8f075.csv
-      md5: 94029d6b3bab517f55d3666094484789
-      size: 523469
-    - path: data/raw/csv-563b0676-9825-4a09-a9fd-7095ade8dec6.csv
-      md5: df73bd8779ff5eec750602e271270493
-      size: 566690
-    - path: data/raw/csv-5bba8028-c209-48d8-a958-0764f0e927b1.csv
-      md5: f88f73dbbfc23e123e1c418eb4c3cab5
-      size: 565375
-    - path: data/raw/csv-9c60edf9-247b-4dc5-8b3d-d50137de4bdc.csv
-      md5: 93b60762a7d119407407b867e9cca494
-      size: 532478
-    - path: data/raw/csv-c1047dd7-2a2c-4046-bae8-9835353aced4.csv
-      md5: 6899fa72928f1c7d28a9964b68f7690f
-      size: 526245
-    - path: data/raw/csv-f2faff3e-672d-41a0-8bf3-278ab00d8796.csv
-      md5: 1bd8e90fa999895d7e57d620bd1004a3
-      size: 45181
-    - path: data/raw/csv-f6c18948-8fac-45ac-ab2a-bb51173800dc.csv
-      md5: add3f0ae818ba9251caeae1919cd491e
-      size: 565354
+    - path: data/raw/fmi
+      md5: b88efcc82005efece1517ceb2f366cbc.dir
+      size: 3326479
+      nfiles: 14
     - path: data/raw/hki_dh_2015_2020_a.csv
       md5: a5ec283006abb2d2758d4aefb4b2d402
       size: 1293525
     - path: dh_modelling/data/prepare_data.py
-      md5: c76a61374255edd7722c35c4b541e4df
-      size: 6459
+      md5: 1e557fbe431cffbacc16aad81d4d635c
+      size: 9309
     outs:
     - path: data/processed/master.feather
-      md5: 11c1e26c55dfc705cbc5d05df8f10b5f
+      md5: d5f2ec96bff343baab75cf71869061f6
       size: 1579442
     - path: data/processed/test.feather
-      md5: a4be55fdb537f2d25929809341ba2bd5
+      md5: c56de25731cc010fc0c26b13bc76eae8
       size: 139378

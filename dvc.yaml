@@ -1,25 +1,23 @@
 vars:
   - file-paths:
       helen: data/raw/hki_dh_2015_2020_a.csv
+      fmi-dir: data/raw/fmi
       test: data/processed/test.feather
       master: data/processed/master.feather
+  - fmi-station-name: Helsinki Kaisaniemi
 stages:
   prepare:
     cmd: >-
       python dh_modelling/data/prepare_data.py
       --split ${prepare.split}
       --helen-path ${file-paths.helen}
+      --fmi-dir ${file-paths.fmi-dir}
+      --fmi-station-name "${fmi-station-name}"
       --test-path ${file-paths.test}
       --master-path ${file-paths.master}
     deps:
-    - data/raw/csv-f2faff3e-672d-41a0-8bf3-278ab00d8796.csv
-    - data/raw/csv-270db165-c228-466b-a438-69caa8c8f075.csv
-    - data/raw/csv-c1047dd7-2a2c-4046-bae8-9835353aced4.csv
-    - data/raw/csv-9c60edf9-247b-4dc5-8b3d-d50137de4bdc.csv
-    - data/raw/csv-5bba8028-c209-48d8-a958-0764f0e927b1.csv
-    - data/raw/csv-563b0676-9825-4a09-a9fd-7095ade8dec6.csv
-    - data/raw/csv-f6c18948-8fac-45ac-ab2a-bb51173800dc.csv
     - ${file-paths.helen}
+    - ${file-paths.fmi-dir}
     - dh_modelling/data/prepare_data.py
     outs:
     - ${file-paths.test}

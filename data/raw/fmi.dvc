@@ -1,0 +1,5 @@
+outs:
+- md5: b88efcc82005efece1517ceb2f366cbc.dir
+  size: 3326479
+  nfiles: 14
+  path: fmi
