@@ -63,7 +63,7 @@ if __name__ == "__main__":
         "--metrics-path",
         help="Where to save test metrics",
         type=Path,
-        default=Path("output/scores.json"),
+        default=Path("output/score.json"),
     )
 
     args = parser.parse_args()
