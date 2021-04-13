@@ -1,40 +1,55 @@
+from datetime import datetime, timezone
 from io import StringIO
-from pathlib import Path
 
-from pandas import DataFrame, DatetimeIndex, read_csv, read_feather, to_datetime
-from pandas._testing import assert_frame_equal
+from pandas import DataFrame, DatetimeIndex, read_csv, to_datetime
+from pandas.testing import assert_frame_equal
 
-from dh_modelling.data.prepare_data import (
+from dh_modelling.prepare import (
     FmiData,
+    FmiMeta,
     GenerationData,
     merge_dataframes,
-    save_dataframe,
+    train_test_split_sorted,
 )
 
 
-def test_read_fmi_raw(tmp_path, mocker):
-    expected = DataFrame({"x": [1, 2]})
+def test_read_fmi_files(tmp_path):
 
-    mocker.patch(
-        "dh_modelling.data.prepare_data.FmiData.load_and_clean", return_value=expected
+    (tmp_path / "csv-meta-f1.csv").write_text(
+        """Havaintoasema,Asemakoodi,Latitudi (desimaaliasteita),Longitudi (desimaaliasteita),Alkuhetki,Loppuhetki,Datan luontihetki
+Helsinki Kaisaniemi,100971,60.17523,24.94459,2018-01-01T01:00:00.000Z,2019-01-01T00:00:00.000Z,2021-04-10T19:51:25.231Z""",
+        "utf8",
+    )
+    (tmp_path / "csv-f1.csv").write_text(
+        u"""Vuosi,Kk,Pv,Klo,Aikavyöhyke,Pilvien määrä (1/8),Ilmanpaine (msl) (hPa),Sademäärä (mm),Suhteellinen kosteus (%),Sateen intensiteetti (mm/h),Lumensyvyys (cm),Ilman lämpötila (degC),Kastepistelämpötila (degC),Näkyvyys (m),Tuulen suunta (deg),Puuskanopeus (m/s),Tuulen nopeus (m/s)
+2018,1,1,01:00,UTC,8,999.5,0,84,0,0,0.9,-1.6,17570,147,6.8,3.9
+2018,1,1,02:00,UTC,8,999.3,0.4,91,2.4,0,0.5,-0.7,1410,154,7.9,3.7
+2018,1,1,03:00,UTC,8,998.3,1,95,0.6,0,0.4,-0.3,1800,155,7.3,3.9""",
+        "utf8",
+    )
+    (tmp_path / "csv-meta-f2.csv").write_text(
+        """Havaintoasema,Asemakoodi,Latitudi (desimaaliasteita),Longitudi (desimaaliasteita),Alkuhetki,Loppuhetki,Datan luontihetki
+Helsinki Kaisaniemi,100971,60.17523,24.94459,2017-01-01T01:00:00.000Z,2018-01-01T00:00:00.000Z,2021-04-10T19:50:27.693Z""",
+        "utf8",
+    )
+    (tmp_path / "csv-f2.csv").write_text(
+        """Vuosi,Kk,Pv,Klo,Aikavyöhyke,Pilvien määrä (1/8),Ilmanpaine (msl) (hPa),Sademäärä (mm),Suhteellinen kosteus (%),Sateen intensiteetti (mm/h),Lumensyvyys (cm),Ilman lämpötila (degC),Kastepistelämpötila (degC),Näkyvyys (m),Tuulen suunta (deg),Puuskanopeus (m/s),Tuulen nopeus (m/s)
+2017,1,1,01:00,UTC,0,998.4,0,89,0,0,3.6,1.9,,286,4.6,3.1
+2017,1,1,02:00,UTC,0,998.1,0,87,0,0,3.3,1.4,,276,3.7,2.5
+2017,1,1,03:00,UTC,5,997.8,0,89,0,0,2.8,1.1,,277,4.8,2.8""",
+        "utf8",
     )
 
-    received = FmiData.read_fmi()
-
-    assert_frame_equal(received, expected)
-
-
-def test_read_helen_raw(tmp_path, mocker):
-    expected = DataFrame({"x": [1, 2]})
-
-    mocker.patch(
-        "dh_modelling.data.prepare_data.GenerationData.load_and_clean",
-        return_value=expected,
+    station_name = "Helsinki Kaisaniemi"
+    expected = FmiData(
+        station_name, (tmp_path / "csv-f1.csv"), (tmp_path / "csv-f2.csv")
     )
 
-    received = GenerationData.read_helen()
+    received = FmiData.read_fmi_files(
+        directory=tmp_path, station_name="Helsinki Kaisaniemi"
+    )
 
-    assert_frame_equal(received, expected)
+    assert received == expected
 
 
 def test_merge_helen_fmi():
@@ -95,21 +110,6 @@ def test_merge_helen_fmi():
     )
 
     assert_frame_equal(received, expected)
-
-
-def test_from_url(tmp_path, requests_mock):
-    test_file_path: Path = tmp_path / "test.csv"
-
-    content = """date_time;dh_MWh
-    29.3.2015 2:00;919,913
-    29.3.2015 4:00;913,885
-    """
-
-    test_url = "http://240.0.0.0/download/test.csv"
-    requests_mock.get(test_url, text=content)
-
-    GenerationData.from_url(url=test_url, raw_file_path=test_file_path)
-    assert test_file_path.exists()
 
 
 def test_load_and_clean(tmp_path):
@@ -191,36 +191,74 @@ def test_load_and_clean_fmi(tmp_path):
     expected.index = DatetimeIndex(expected["date_time"]).tz_convert("Europe/Helsinki")
     expected = expected.drop("date_time", axis=1)
 
-    data = FmiData(file_path_1, file_path_2)
+    data = FmiData("test_station", file_path_1, file_path_2)
     received: DataFrame = data.load_and_clean()
 
     assert_frame_equal(received, expected)
 
 
-def test_save_and_load_intermediate(tmp_path):
-    original = DataFrame(
-        data={
-            "date_time": [
-                "2015-03-29 00:00:00+02:00",
-                "2015-03-29 01:00:00+02:00",
-            ],
-            "dh_MWh": [
-                958.673,
-                930.965,
-            ],
-        }
+def test_train_test_split_sorted():
+    content_in = """date_time;dh_MWh
+1.1.2015 1:00;936
+1.1.2015 2:00;924,2
+1.1.2015 3:00;926,3
+1.1.2015 4:00;942,1
+1.1.2015 5:00;957,1
+1.1.2015 9:00;1091,6
+1.1.2015 6:00;972,2
+1.1.2015 7:00;1022,2
+1.1.2015 8:00;1034,6
+1.1.2015 10:00;1109"""
+
+    train_in = """date_time;dh_MWh
+1.1.2015 1:00;936
+1.1.2015 2:00;924,2
+1.1.2015 3:00;926,3
+1.1.2015 4:00;942,1
+1.1.2015 5:00;957,1
+1.1.2015 6:00;972,2
+1.1.2015 7:00;1022,2
+"""
+
+    test_in = """date_time;dh_MWh
+1.1.2015 8:00;1034,6
+1.1.2015 9:00;1091,6
+1.1.2015 10:00;1109"""
+
+    def read_content(s):
+        return read_csv(
+            StringIO(s),
+            sep=";",
+            decimal=",",
+            parse_dates=["date_time"],
+            date_parser=lambda x: datetime.strptime(x, "%d.%m.%Y %H:%M"),
+        ).set_index("date_time")
+
+    df_in = read_content(content_in)
+    expected_train = read_content(train_in)
+    expected_test = read_content(test_in)
+
+    received_train, received_test = train_test_split_sorted(df_in, test_size=0.3)
+
+    assert_frame_equal(received_train, expected_train)
+    assert_frame_equal(received_test, expected_test)
+
+
+def test_read_meta(tmp_path):
+    test_path = tmp_path / "test.csv"
+
+    with test_path.open("w") as f:
+        content = """Havaintoasema,Asemakoodi,Latitudi (desimaaliasteita),Longitudi (desimaaliasteita),Alkuhetki,Loppuhetki,Datan luontihetki
+Helsinki Kaisaniemi,100971,60.17523,24.94459,2018-01-01T01:00:00.000Z,2019-01-01T00:00:00.000Z,2021-04-10T19:51:25.231Z"""
+        f.write(content)
+
+    fm: FmiMeta = FmiMeta.from_file(test_path)
+    assert fm.station_name == "Helsinki Kaisaniemi"
+    assert fm.station_code == 100971
+    assert fm.latitude == 60.17523
+    assert fm.longitude == 24.94459
+    assert fm.start_time == datetime(2018, 1, 1, 1, tzinfo=timezone.utc)
+    assert fm.end_time == datetime(2019, 1, 1, 0, tzinfo=timezone.utc)
+    assert fm.creation_time == datetime(
+        2021, 4, 10, 19, 51, 25, 231000, tzinfo=timezone.utc
     )
-    original.index = DatetimeIndex(
-        to_datetime(original["date_time"], utc=True)
-    ).tz_convert("Europe/Helsinki")
-    original = original.drop("date_time", axis=1)
-
-    fpath = tmp_path / "test.feather"
-    save_dataframe(original, file_path=fpath)
-    assert fpath.exists()
-
-    received: DataFrame = read_feather(fpath)
-    received.index = DatetimeIndex(received["date_time"]).tz_convert("Europe/Helsinki")
-    received = received.drop("date_time", axis=1)
-
-    assert_frame_equal(original, received)

@@ -10,22 +10,21 @@ isort = "*"
 flake8 = "*"
 mypy = "*"
 pytest-cov = "*"
-requests-mock = "*"
 pre-commit = "*"
 
 [packages]
 jupyter = "*"
 pandas = "*"
-requests = "*"
 pyarrow = "*"
 dvc = {extras = ["s3"],version = "*"}
 matplotlib = "*"
 pytest-mock = "*"
 sklearn = "*"
 pyyaml = "*"
+requests = "*"
 
 [requires]
-python_version = "3.8"
+python_version = "3.9"
 
 [pipenv]
 allow_prereleases = true

@@ -1,0 +1,63 @@
+vars:
+  - file-paths:
+      helen: data/raw/hki_dh_2015_2020_a.csv
+      fmi-dir: data/raw/fmi
+      test: data/processed/test.feather
+      master: data/intermediate/master.feather
+      train: data/processed/train.feather
+      model: models/model.joblib
+      score: output/score.json
+  - fmi-station-name: 'Helsinki Kaisaniemi'
+
+stages:
+  prepare:
+    cmd: >-
+      python -m dh_modelling.prepare
+      --split ${prepare.split}
+      --helen-path ${file-paths.helen}
+      --fmi-dir ${file-paths.fmi-dir}
+      --fmi-station-name "${fmi-station-name}"
+      --test-path ${file-paths.test}
+      --master-path ${file-paths.master}
+    deps:
+      - ${file-paths.helen}
+      - ${file-paths.fmi-dir}
+      - dh_modelling/prepare.py
+    outs:
+      - ${file-paths.test}
+      - ${file-paths.master}
+
+  featurize:
+    cmd: >-
+      python -m dh_modelling.featurize
+      --master-path ${file-paths.master}
+      --train-path ${file-paths.train}
+    deps:
+      - ${file-paths.master}
+      - dh_modelling/featurize.py
+    outs:
+      - ${file-paths.train}
+
+  train:
+    cmd: >-
+      python -m dh_modelling.train
+      --train-path ${file-paths.train}
+      --model-path ${file-paths.model}
+    deps:
+      - ${file-paths.train}
+      - dh_modelling/train.py
+    outs:
+      - ${file-paths.model}
+
+  evaluate:
+    cmd: >-
+      python -m dh_modelling.evaluate
+      --model-path ${file-paths.model}
+      --test-path ${file-paths.test}
+      --metrics-path ${file-paths.score}
+    deps:
+      - ${file-paths.model}
+      - ${file-paths.test}
+      - dh_modelling/evaluate.py
+    metrics:
+      - ${file-paths.score}

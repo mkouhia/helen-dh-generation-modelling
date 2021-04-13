@@ -2,3 +2,9 @@ outs:
 - md5: a5ec283006abb2d2758d4aefb4b2d402
   size: 1293525
   path: hki_dh_2015_2020_a.csv
+md5: 2b1ff5f9a164ff952e50a5a4d624fb18
+frozen: true
+deps:
+- etag: '"1D72ACF1A62D300"'
+  size: 1293525
+  path: https://www.helen.fi/globalassets/helen-oy/vastuullisuus/hki_dh_2015_2020_a.csv
