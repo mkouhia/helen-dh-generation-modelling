@@ -1,7 +1,7 @@
 schema: '2.0'
 stages:
   prepare:
-    cmd: python dh_modelling/data/prepare_data.py --split 0.2 --helen-path data/raw/hki_dh_2015_2020_a.csv
+    cmd: python dh_modelling/prepare.py --split 0.2 --helen-path data/raw/hki_dh_2015_2020_a.csv
       --fmi-dir data/raw/fmi --fmi-station-name "Helsinki Kaisaniemi" --test-path
       data/processed/test.feather --master-path data/processed/master.feather
     deps:
@@ -12,7 +12,7 @@ stages:
     - path: data/raw/hki_dh_2015_2020_a.csv
       md5: a5ec283006abb2d2758d4aefb4b2d402
       size: 1293525
-    - path: dh_modelling/data/prepare_data.py
+    - path: dh_modelling/prepare.py
       md5: 0ef4b713f4a5219471df150cb610f688
       size: 9209
     outs:

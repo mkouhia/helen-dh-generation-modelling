@@ -8,7 +8,7 @@ vars:
 stages:
   prepare:
     cmd: >-
-      python dh_modelling/data/prepare_data.py
+      python dh_modelling/prepare.py
       --split ${prepare.split}
       --helen-path ${file-paths.helen}
       --fmi-dir ${file-paths.fmi-dir}
@@ -18,7 +18,7 @@ stages:
     deps:
     - ${file-paths.helen}
     - ${file-paths.fmi-dir}
-    - dh_modelling/data/prepare_data.py
+    - dh_modelling/prepare.py
     outs:
     - ${file-paths.test}
     - ${file-paths.master}

@@ -4,7 +4,7 @@ from io import StringIO
 from pandas import DataFrame, DatetimeIndex, read_csv, read_feather, to_datetime
 from pandas._testing import assert_frame_equal
 
-from dh_modelling.data.prepare_data import (
+from dh_modelling.prepare import (
     FmiData,
     FmiMeta,
     GenerationData,
@@ -57,7 +57,7 @@ def test_read_helen_raw(tmp_path, mocker):
     expected = DataFrame({"x": [1, 2]})
 
     mocker.patch(
-        "dh_modelling.data.prepare_data.GenerationData.load_and_clean",
+        "dh_modelling.prepare.GenerationData.load_and_clean",
         return_value=expected,
     )
 
