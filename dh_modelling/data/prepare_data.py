@@ -15,7 +15,6 @@ HELEN_DATA_FILENAME = "hki_dh_2015_2020_a.csv"
 HELEN_INTERMEDIATE_FILENAME = "helen_cleaned.feather"
 WEATHER_INTERMEDIATE_FILENAME = "weather_{station}.feather"
 MASTER_INTERMEDIATE_FILENAME = "master.feather"
-TEST_FILENAME = "test.feather"
 
 raw_data_path = (Path(__file__) / "../../../data/raw").resolve()
 intermediate_data_path = (Path(__file__) / "../../../data/intermediate").resolve()
@@ -166,8 +165,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--test-path",
         help="Where to save test dataframe",
-        type=lambda p: Path(p).absolute(),
-        default=processed_data_path / TEST_FILENAME,
+        type=Path,
+        default=Path("data/processed/test.feather"),
     )
 
     args = parser.parse_args()
@@ -176,7 +175,7 @@ if __name__ == "__main__":
     df_generation = GenerationData.read_helen()
 
     gen_train, gen_test = train_test_split_sorted(df_generation, test_size=args.split)
-    save_dataframe(gen_test, file_path=args.test_path)
+    save_dataframe(gen_test, file_path=args.test_path.absolute())
 
     df_master: DataFrame = merge_dataframes(df_helen=gen_train, df_fmi=df_weather)
     save_dataframe(
