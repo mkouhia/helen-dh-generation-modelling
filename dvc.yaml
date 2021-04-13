@@ -4,7 +4,7 @@ vars:
       fmi-dir: data/raw/fmi
       test: data/processed/test.feather
       master: data/processed/master.feather
-  - fmi-station-name: Helsinki Kaisaniemi
+  - fmi-station-name: 'Helsinki Kaisaniemi'
 stages:
   prepare:
     cmd: >-
