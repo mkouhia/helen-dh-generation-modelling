@@ -10,9 +10,6 @@ from pandas import DataFrame, DatetimeIndex, concat, merge, read_csv
 
 PathLike = Union[Path, os.PathLike]
 
-HELEN_DATA_FILENAME = "hki_dh_2015_2020_a.csv"
-
-HELEN_INTERMEDIATE_FILENAME = "helen_cleaned.feather"
 WEATHER_INTERMEDIATE_FILENAME = "weather_{station}.feather"
 
 raw_data_path = (Path(__file__) / "../../../data/raw").resolve()
@@ -41,9 +38,7 @@ class GenerationData:
         return df
 
     @staticmethod
-    def read_helen(
-        raw_file_path: Path = raw_data_path / HELEN_DATA_FILENAME,
-    ) -> DataFrame:
+    def read_helen(raw_file_path: Path) -> DataFrame:
         logging.info(f"Read Helen generation data, {raw_file_path=}")
         generation_data = GenerationData(raw_file_path=raw_file_path)
         return generation_data.load_and_clean()
@@ -161,6 +156,12 @@ if __name__ == "__main__":
         "--split", help="Test data size, fraction of total", type=float, default=0.2
     )
     parser.add_argument(
+        "--helen-path",
+        help="Where to read raw generation data",
+        type=Path,
+        default=Path("data/raw/hki_dh_2015_2020_a.csv"),
+    )
+    parser.add_argument(
         "--test-path",
         help="Where to save test dataframe",
         type=Path,
@@ -176,7 +177,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     df_weather = FmiData.read_fmi()
-    df_generation = GenerationData.read_helen()
+    df_generation = GenerationData.read_helen(raw_file_path=args.helen_path.absolute())
 
     gen_train, gen_test = train_test_split_sorted(df_generation, test_size=args.split)
     save_dataframe(gen_test, file_path=args.test_path.absolute())

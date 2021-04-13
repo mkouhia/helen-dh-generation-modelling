@@ -33,7 +33,7 @@ def test_read_helen_raw(tmp_path, mocker):
         return_value=expected,
     )
 
-    received = GenerationData.read_helen()
+    received = GenerationData.read_helen(raw_file_path=tmp_path / "mocked")
 
     assert_frame_equal(received, expected)
 

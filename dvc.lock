@@ -1,8 +1,8 @@
 schema: '2.0'
 stages:
   prepare:
-    cmd: python dh_modelling/data/prepare_data.py --split 0.2 --test-path data/processed/test.feather
-      --master-path data/processed/master.feather
+    cmd: python dh_modelling/data/prepare_data.py --split 0.2 --helen-path data/raw/hki_dh_2015_2020_a.csv
+      --test-path data/processed/test.feather --master-path data/processed/master.feather
     deps:
     - path: data/raw/csv-270db165-c228-466b-a438-69caa8c8f075.csv
       md5: 94029d6b3bab517f55d3666094484789
@@ -29,8 +29,8 @@ stages:
       md5: a5ec283006abb2d2758d4aefb4b2d402
       size: 1293525
     - path: dh_modelling/data/prepare_data.py
-      md5: c4041017716d1c3b567cca9919730511
-      size: 6392
+      md5: c76a61374255edd7722c35c4b541e4df
+      size: 6459
     outs:
     - path: data/processed/master.feather
       md5: 11c1e26c55dfc705cbc5d05df8f10b5f
