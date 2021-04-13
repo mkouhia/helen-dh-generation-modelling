@@ -163,17 +163,22 @@ if __name__ == "__main__":
     parser.add_argument(
         "--split", help="Test data size, fraction of total", type=float, default=0.2
     )
+    parser.add_argument(
+        "--test-path",
+        help="Where to save test dataframe",
+        type=lambda p: Path(p).absolute(),
+        default=processed_data_path / TEST_FILENAME,
+    )
 
     args = parser.parse_args()
-    print(args)
 
     df_weather = FmiData.read_fmi()
     df_generation = GenerationData.read_helen()
 
     gen_train, gen_test = train_test_split_sorted(df_generation, test_size=args.split)
+    save_dataframe(gen_test, file_path=args.test_path)
 
     df_master: DataFrame = merge_dataframes(df_helen=gen_train, df_fmi=df_weather)
     save_dataframe(
         df_master, file_path=processed_data_path / MASTER_INTERMEDIATE_FILENAME
     )
-    save_dataframe(gen_test, file_path=processed_data_path / TEST_FILENAME)
