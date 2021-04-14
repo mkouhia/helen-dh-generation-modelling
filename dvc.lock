@@ -26,8 +26,8 @@ stages:
       md5: 2dea54fd98f93fca994c9ebe0d77bbc2
       size: 842234
     - path: dh_modelling/featurize.py
-      md5: 091029c14e39634ef042d7fa029bcbd7
-      size: 2417
+      md5: 7b3cb34680d83c8ae463096d2b7b0dac
+      size: 2408
     outs:
     - path: data/intermediate/features.feather
       md5: cc0560ed53dde7a2e7d5b511c309d9a6
