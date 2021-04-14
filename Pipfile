@@ -23,6 +23,8 @@ sklearn = "*"
 pyyaml = "*"
 requests = "*"
 xgboost = "*"
+holidays = "*"
+seaborn = "*"
 
 [requires]
 python_version = "3.9"
