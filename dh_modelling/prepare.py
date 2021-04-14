@@ -66,10 +66,15 @@ class FmiData:
         frames = [self._read_file(f) for f in self.raw_file_paths]
         df = concat(frames)
         df = df.loc[~df.index.duplicated()]
+        df = df.sort_index()
 
+        # Select variables
+        df = df[["Ilman lämpötila (degC)"]]
+
+        # Clean up
         df["Ilman lämpötila (degC)"].interpolate(inplace=True)
 
-        return df.sort_index()
+        return df
 
     @staticmethod
     def _read_file(filepath_or_buffer: PathLike) -> DataFrame:
@@ -165,24 +170,6 @@ def merge_dataframes(df_helen: DataFrame, df_fmi: DataFrame) -> DataFrame:
     return merge(df_helen, df_fmi, how="left", left_index=True, right_index=True)
 
 
-def train_test_split_sorted(
-    df: DataFrame, test_size: float = 0.2
-) -> tuple[DataFrame, DataFrame]:
-    """
-    Split train/test data, by sorting data on index and taking last data points as test
-
-    :param df: input dataframe
-    :param test_size: fraction of test size of all points
-    :return: train, test
-    """
-    logging.info(f"Perform train/test split, {test_size=}")
-    all_data = df.sort_index()
-    split_idx = int(len(all_data) * (1 - test_size))
-    train = all_data[:split_idx]
-    test = all_data[split_idx:]
-    return train, test
-
-
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
@@ -194,7 +181,7 @@ if __name__ == "__main__":
         "--split", help="Test data size, fraction of total", type=float, default=0.2
     )
     parser.add_argument(
-        "--helen-path",
+        "--input",
         help="Where to read raw generation data",
         type=Path,
         default=Path("data/raw/hki_dh_2015_2020_a.csv"),
@@ -212,13 +199,7 @@ if __name__ == "__main__":
         default="Helsinki Kaisaniemi",
     )
     parser.add_argument(
-        "--test-path",
-        help="Where to save test dataframe",
-        type=Path,
-        default=Path("data/processed/test.feather"),
-    )
-    parser.add_argument(
-        "--master-path",
+        "--output",
         help="Where to save master dataframe",
         type=Path,
         default=Path("data/intermediate/master.feather"),
@@ -226,15 +207,15 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    generation_loader = GenerationData(raw_file_path=args.input.absolute())
+    df_generation: DataFrame = generation_loader.load_and_clean()
+
+    # TODO 2021-04-14 feed in required date range from df_generation, warn if dates missing
     fmi_loader: FmiData = FmiData.read_fmi_files(
         directory=args.fmi_dir.absolute(), station_name=args.fmi_station_name
     )
     df_weather = fmi_loader.load_and_clean()
 
-    generation_loader = GenerationData(raw_file_path=args.helen_path.absolute())
-    df_generation: DataFrame = generation_loader.load_and_clean()
     df_all: DataFrame = merge_dataframes(df_helen=df_generation, df_fmi=df_weather)
 
-    train, test = train_test_split_sorted(df_all, test_size=args.split)
-    save_intermediate(train, path=args.master_path.absolute())
-    save_intermediate(test, path=args.test_path.absolute())
+    save_intermediate(df_all, path=args.output.absolute())

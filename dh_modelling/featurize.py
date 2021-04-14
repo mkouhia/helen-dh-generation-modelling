@@ -25,13 +25,13 @@ if __name__ == "__main__":
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        "--master-path",
+        "--input",
         help="Where to read master dataframe",
         type=Path,
         default=Path("data/intermediate/master.feather"),
     )
     parser.add_argument(
-        "--train-path",
+        "--output",
         help="Where to save train dataframe",
         type=Path,
         default=Path("data/processed/train.feather"),
@@ -39,6 +39,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    df_master: DataFrame = load_intermediate(path=args.master_path.absolute())
+    df_master: DataFrame = load_intermediate(path=args.input.absolute())
     df_train: DataFrame = featurize(df_master)
-    save_intermediate(df_train, path=args.train_path.absolute())
+    save_intermediate(df_train, path=args.output.absolute())

@@ -1,9 +1,8 @@
 schema: '2.0'
 stages:
   prepare:
-    cmd: python -m dh_modelling.prepare --split 0.2 --helen-path data/raw/hki_dh_2015_2020_a.csv
-      --fmi-dir data/raw/fmi --fmi-station-name "Helsinki Kaisaniemi" --test-path
-      data/processed/test.feather --master-path data/intermediate/master.feather
+    cmd: python -m dh_modelling.prepare --input data/raw/hki_dh_2015_2020_a.csv --fmi-dir
+      data/raw/fmi --fmi-station-name "Helsinki Kaisaniemi" --output data/intermediate/prepared.feather
     deps:
     - path: data/raw/fmi
       md5: b88efcc82005efece1517ceb2f366cbc.dir
@@ -13,36 +12,33 @@ stages:
       md5: a5ec283006abb2d2758d4aefb4b2d402
       size: 1293525
     - path: dh_modelling/prepare.py
-      md5: 152288b6d126388bbc558378d513e208
-      size: 8406
+      md5: 258fe2a2dc6350a186ea4f2b32192af1
+      size: 7709
     outs:
-    - path: data/intermediate/master.feather
-      md5: d5f2ec96bff343baab75cf71869061f6
-      size: 1579442
-    - path: data/processed/test.feather
-      md5: ca8984ad77562bf23b7a53aa43143557
-      size: 422634
+    - path: data/intermediate/prepared.feather
+      md5: 2dea54fd98f93fca994c9ebe0d77bbc2
+      size: 842234
   featurize:
-    cmd: python -m dh_modelling.featurize --master-path data/intermediate/master.feather
-      --train-path data/processed/train.feather
+    cmd: python -m dh_modelling.featurize --input data/intermediate/prepared.feather
+      --output data/intermediate/features.feather
     deps:
-    - path: data/intermediate/master.feather
-      md5: d5f2ec96bff343baab75cf71869061f6
-      size: 1579442
+    - path: data/intermediate/prepared.feather
+      md5: 2dea54fd98f93fca994c9ebe0d77bbc2
+      size: 842234
     - path: dh_modelling/featurize.py
-      md5: 021d9a7e54166d83891b690e15fdecca
-      size: 1176
+      md5: 7734cb568d1cc84538c1fbb36fc57314
+      size: 1156
     outs:
-    - path: data/processed/train.feather
-      md5: d5f2ec96bff343baab75cf71869061f6
-      size: 1579442
+    - path: data/intermediate/features.feather
+      md5: 2dea54fd98f93fca994c9ebe0d77bbc2
+      size: 842234
   train:
     cmd: python -m dh_modelling.train --train-path data/processed/train.feather --model-path
       models/model.joblib
     deps:
     - path: data/processed/train.feather
-      md5: d5f2ec96bff343baab75cf71869061f6
-      size: 1579442
+      md5: ccfd06e714e2bf34b0b56e1f410e8be5
+      size: 673962
     - path: dh_modelling/train.py
       md5: d1523f8626231fdecc8850bd4cd26d1a
       size: 1194
@@ -55,11 +51,11 @@ stages:
       data/processed/test.feather --metrics-path output/score.json
     deps:
     - path: data/processed/test.feather
-      md5: ca8984ad77562bf23b7a53aa43143557
-      size: 422634
+      md5: aecce539b2b3b797d9c46f5d52fd38a9
+      size: 171338
     - path: dh_modelling/evaluate.py
-      md5: bef2784eab8dd3926f7c11dc43094317
-      size: 2097
+      md5: adf9ec6a3e14675f6547e8720bfb122e
+      size: 2096
     - path: models/model.joblib
       md5: ff139e72ff51675e1ca194a59e2c7e56
       size: 246
@@ -67,3 +63,20 @@ stages:
     - path: output/score.json
       md5: 04c095774c87c94944eb03686a280f12
       size: 143
+  split:
+    cmd: python -m dh_modelling.split --input data/intermediate/features.feather --test-size
+      0.2 --train-output data/processed/train.feather --test-output data/processed/test.feather
+    deps:
+    - path: data/intermediate/features.feather
+      md5: 2dea54fd98f93fca994c9ebe0d77bbc2
+      size: 842234
+    - path: dh_modelling/split.py
+      md5: cc7498adfaac8dc8b76e3f6c4c4eaa65
+      size: 1938
+    outs:
+    - path: data/processed/test.feather
+      md5: aecce539b2b3b797d9c46f5d52fd38a9
+      size: 171338
+    - path: data/processed/train.feather
+      md5: ccfd06e714e2bf34b0b56e1f410e8be5
+      size: 673962

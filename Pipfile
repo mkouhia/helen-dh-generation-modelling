@@ -22,6 +22,7 @@ pytest-mock = "*"
 sklearn = "*"
 pyyaml = "*"
 requests = "*"
+xgboost = "*"
 
 [requires]
 python_version = "3.9"

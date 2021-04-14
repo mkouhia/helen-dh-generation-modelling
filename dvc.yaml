@@ -2,8 +2,9 @@ vars:
   - file-paths:
       helen: data/raw/hki_dh_2015_2020_a.csv
       fmi-dir: data/raw/fmi
+      prepared: data/intermediate/prepared.feather
+      features: data/intermediate/features.feather
       test: data/processed/test.feather
-      master: data/intermediate/master.feather
       train: data/processed/train.feather
       model: models/model.joblib
       score: output/score.json
@@ -13,30 +14,41 @@ stages:
   prepare:
     cmd: >-
       python -m dh_modelling.prepare
-      --split ${prepare.split}
-      --helen-path ${file-paths.helen}
+      --input ${file-paths.helen}
       --fmi-dir ${file-paths.fmi-dir}
       --fmi-station-name "${fmi-station-name}"
-      --test-path ${file-paths.test}
-      --master-path ${file-paths.master}
+      --output ${file-paths.prepared}
     deps:
       - ${file-paths.helen}
       - ${file-paths.fmi-dir}
       - dh_modelling/prepare.py
     outs:
-      - ${file-paths.test}
-      - ${file-paths.master}
+      - ${file-paths.prepared}
 
   featurize:
     cmd: >-
       python -m dh_modelling.featurize
-      --master-path ${file-paths.master}
-      --train-path ${file-paths.train}
+      --input ${file-paths.prepared}
+      --output ${file-paths.features}
     deps:
-      - ${file-paths.master}
+      - ${file-paths.prepared}
       - dh_modelling/featurize.py
     outs:
+      - ${file-paths.features}
+
+  split:
+    cmd: >-
+      python -m dh_modelling.split
+      --input ${file-paths.features}
+      --test-size ${prepare.split}
+      --train-output ${file-paths.train}
+      --test-output ${file-paths.test}
+    deps:
+      - ${file-paths.features}
+      - dh_modelling/split.py
+    outs:
       - ${file-paths.train}
+      - ${file-paths.test}
 
   train:
     cmd: >-

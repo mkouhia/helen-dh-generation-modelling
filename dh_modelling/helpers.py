@@ -35,7 +35,7 @@ def load_intermediate(
     :param timezone: timezone, at which date_time_column is converted
     :return: loaded dataframe, with 'date_time_column' as index
     """
-    logging.info(f"Load dataset from {path=}")
+    logging.info(f"Load dataset from {path}")
     df: DataFrame = read_feather(path)
     if set_datetime_index:
         df.index = DatetimeIndex(df[date_time_column]).tz_convert(timezone)
