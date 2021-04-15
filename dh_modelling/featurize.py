@@ -25,7 +25,23 @@ def featurize(df: DataFrame) -> DataFrame:
         df.index.tz_convert(tz=timezone.utc) - Timestamp("1970-01-01", tz=timezone.utc)
     ) // Timedelta("1 second")
     df["is_business_day"] = is_business_day(df.index).astype(np.int32)
+
+    # df = encode_sin_cos(df, 'hour_of_day', 23)
+    # df = encode_sin_cos(df, 'day_of_week', 6)
+    # df = encode_sin_cos(df, 'day_of_year', 364)
     return df
+
+
+def encode_sin_cos(data, col_name, max_val):
+    col = data[col_name]
+    data = data.drop(col_name, axis=1)
+    data[col_name + "_sin"] = _encode_x(np.sin, col, max_val)
+    data[col_name + "_cos"] = _encode_x(np.cos, col, max_val)
+    return data
+
+
+def _encode_x(func, col, max_val):
+    return func(2 * np.pi * col / max_val)
 
 
 def is_business_day(idx: DatetimeIndex, country: str = "Finland") -> np.ndarray:
@@ -55,19 +71,19 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--input",
-        help="Where to read master dataframe",
+        help="Where to read input dataframe",
         type=Path,
-        default=Path("data/intermediate/master.feather"),
+        default=Path("data/intermediate/prepared.feather"),
     )
     parser.add_argument(
         "--output",
-        help="Where to save train dataframe",
+        help="Where to save output dataframe",
         type=Path,
-        default=Path("data/processed/train.feather"),
+        default=Path("data/processed/features.feather"),
     )
 
     args = parser.parse_args()
 
-    df_master: DataFrame = load_intermediate(path=args.input.absolute())
-    df_train: DataFrame = featurize(df_master)
-    save_intermediate(df_train, path=args.output.absolute())
+    df_input: DataFrame = load_intermediate(path=args.input.absolute())
+    df_output: DataFrame = featurize(df_input)
+    save_intermediate(df_output, path=args.output.absolute())
