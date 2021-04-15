@@ -2,20 +2,40 @@ import argparse
 import logging
 from pathlib import Path
 
-import numpy as np
+import xgboost as xgb
 from pandas import DataFrame
 
 from .helpers import load_intermediate
-from .model import Model, save_model
 
 
-def train(df: DataFrame, model: Model):
+def train(
+    df: DataFrame,
+    objective,
+    num_boost_round,
+    tree_method,
+    max_depth,
+    min_child_weight,
+    eta,
+    subsample,
+    colsample_bytree,
+) -> xgb.Booster:
     logging.info("Train model")
 
-    X: np.ndarray = df["Ilman lämpötila (degC)"].to_numpy()
-    y: np.ndarray = df["dh_MWh"].to_numpy()
+    X, y = df.drop("dh_MWh", axis=1), df[["dh_MWh"]]
 
-    model.fit(X, y)
+    dtrain: xgb.DMatrix = xgb.DMatrix(data=X, label=y)
+
+    params = {
+        "objective": objective,
+        "tree_method": tree_method,
+        "max_depth": max_depth,
+        "min_child_weight": min_child_weight,
+        "eta": eta,
+        "subsample": subsample,
+        "colsample_bytree": colsample_bytree,
+    }
+
+    return xgb.train(params, dtrain, num_boost_round=num_boost_round)
 
 
 if __name__ == "__main__":
@@ -35,14 +55,32 @@ if __name__ == "__main__":
         "--model-path",
         help="Where to save model",
         type=Path,
-        default=Path("models/model.joblib"),
+        default=Path("models/model.bin"),
     )
+    parser.add_argument("--objective", default="reg:squarederror", type=str)
+    parser.add_argument("--num-boost-round", default=10, type=int)
+    parser.add_argument("--tree-method", default="hist", type=str)
+    parser.add_argument("--eval-metric", default="rmse", type=str)
+    parser.add_argument("--max-depth", default=5, type=int)
+    parser.add_argument("--min-child-weight", default=1.0, type=float)
+    parser.add_argument("--eta", default=0.3, type=float)
+    parser.add_argument("--subsample", default=1.0, type=float)
+    parser.add_argument("--colsample-bytree", default=1.0, type=float)
 
     args = parser.parse_args()
 
     df_train: DataFrame = load_intermediate(path=args.train_path.absolute())
 
-    model: Model = Model()
-    train(df_train, model)
+    model: xgb.Booster = train(
+        df_train,
+        objective=args.objective,
+        num_boost_round=args.num_boost_round,
+        tree_method=args.tree_method,
+        max_depth=args.max_depth,
+        min_child_weight=args.min_child_weight,
+        eta=args.eta,
+        subsample=args.subsample,
+        colsample_bytree=args.colsample_bytree,
+    )
 
-    save_model(model, args.model_path.absolute())
+    model.save_model(args.model_path.absolute())

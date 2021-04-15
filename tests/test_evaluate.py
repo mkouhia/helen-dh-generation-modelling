@@ -1,20 +1,20 @@
 import json
 
+import xgboost
 from pandas import DataFrame
 
 from dh_modelling.evaluate import evaluate, save_metrics
-from dh_modelling.model import Model
 
 
 def test_evaluate(mocker):
-    model = Model()
+    model = xgboost.Booster()
     df = DataFrame({"dh_MWh": [11.7, 12.3], "Ilman lämpötila (degC)": [4.3, -5.7]})
 
     mae = 11.7
     mape = 0.082
     msqe = 10.5
 
-    mocker.patch("dh_modelling.model.Model.predict")
+    mocker.patch("xgboost.Booster.predict")
     mocker.patch("dh_modelling.evaluate.mean_absolute_error", return_value=mae)
     mocker.patch(
         "dh_modelling.evaluate.mean_absolute_percentage_error", return_value=mape

@@ -6,7 +6,7 @@ vars:
       features: data/intermediate/features.feather
       test: data/processed/test.feather
       train: data/processed/train.feather
-      model: models/model.joblib
+      model: models/model.bin
       score: output/score.json
   - fmi-station-name: 'Helsinki Kaisaniemi'
 
@@ -55,6 +55,14 @@ stages:
       python -m dh_modelling.train
       --train-path ${file-paths.train}
       --model-path ${file-paths.model}
+      --objective ${train.objective}
+      --num-boost-round ${train.num-boost-round}
+      --tree-method ${train.tree-method}
+      --max-depth ${train.max-depth}
+      --min-child-weight ${train.min-child-weight}
+      --eta ${train.eta}
+      --subsample ${train.subsample}
+      --colsample-bytree ${train.colsample-bytree}
     deps:
       - ${file-paths.train}
       - dh_modelling/train.py
