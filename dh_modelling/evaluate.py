@@ -22,7 +22,10 @@ def evaluate(model: Model, df: DataFrame) -> dict[str, float]:
     X: np.ndarray = df["Ilman lämpötila (degC)"].to_numpy()
 
     predictions: np.ndarray = model.predict(X)
+    return calculate_metrics(actual, predictions)
 
+
+def calculate_metrics(actual: np.ndarray, predictions: np.ndarray) -> dict:
     return {
         "mean_absolute_error": mean_absolute_error(actual, predictions),
         "mean_absolute_percentage_error": mean_absolute_percentage_error(

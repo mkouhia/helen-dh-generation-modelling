@@ -25,6 +25,7 @@ requests = "*"
 xgboost = "*"
 holidays = "*"
 seaborn = "*"
+graphviz = "*"
 
 [requires]
 python_version = "3.9"

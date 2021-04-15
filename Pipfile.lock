@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "7c28a2d10a12b8dde9226fd728c402657ca82dd07c205eef080580ef62502d8b"
+            "sha256": "846627529f67e3ce6921f0e4b9ce6a25a342f01153758dbd1d8cf2982c58b16f"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -364,6 +364,14 @@
                 "sha256:d671fdfa5310f2639538b6c858c4b1aef7755535ccfcb9c1cdf0d29171326add"
             ],
             "version": "==0.6"
+        },
+        "graphviz": {
+            "hashes": [
+                "sha256:3cad5517c961090dfc679df6402a57de62d97703e2880a1a46147bb0dc1639eb",
+                "sha256:d2d25af1c199cad567ce4806f0449cb74eb30cf451fd7597251e1da099ac6e57"
+            ],
+            "index": "pypi",
+            "version": "==0.16"
         },
         "hijri-converter": {
             "hashes": [
