@@ -55,14 +55,9 @@ stages:
       python -m dh_modelling.train
       --train-path ${file-paths.train}
       --model-path ${file-paths.model}
-      --objective ${train.objective}
+      --optimize-rounds ${train.optimize-rounds}
       --num-boost-round ${train.num-boost-round}
-      --tree-method ${train.tree-method}
-      --max-depth ${train.max-depth}
-      --min-child-weight ${train.min-child-weight}
-      --eta ${train.eta}
-      --subsample ${train.subsample}
-      --colsample-bytree ${train.colsample-bytree}
+      --use-gpu
     deps:
       - ${file-paths.train}
       - dh_modelling/train.py

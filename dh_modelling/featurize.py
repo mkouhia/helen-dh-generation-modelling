@@ -1,11 +1,12 @@
 import argparse
 import logging
+import numbers
 from datetime import timezone
 from pathlib import Path
 
 import holidays
 import numpy as np
-from pandas import DataFrame, DatetimeIndex, Timedelta, Timestamp
+from pandas import DataFrame, DatetimeIndex, Series, Timedelta, Timestamp
 
 from .helpers import load_intermediate, save_intermediate
 
@@ -32,7 +33,7 @@ def featurize(df: DataFrame) -> DataFrame:
     return df
 
 
-def encode_sin_cos(data, col_name, max_val):
+def encode_sin_cos(data: DataFrame, col_name: str, max_val: numbers.Real) -> DataFrame:
     col = data[col_name]
     data = data.drop(col_name, axis=1)
     data[col_name + "_sin"] = _encode_x(np.sin, col, max_val)
@@ -40,7 +41,7 @@ def encode_sin_cos(data, col_name, max_val):
     return data
 
 
-def _encode_x(func, col, max_val):
+def _encode_x(func: np.ufunc, col: Series, max_val: numbers.Real):
     return func(2 * np.pi * col / max_val)
 
 

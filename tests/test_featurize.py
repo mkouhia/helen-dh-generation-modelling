@@ -2,7 +2,7 @@ import numpy as np
 from pandas import DataFrame, DatetimeIndex, to_datetime
 from pandas.testing import assert_frame_equal
 
-from dh_modelling.featurize import featurize
+from dh_modelling.featurize import encode_sin_cos, featurize
 
 
 def test_featurize():
@@ -40,3 +40,15 @@ def test_featurize():
     received: DataFrame = featurize(df_input)
 
     assert_frame_equal(received, expected)
+
+
+def test_encode_sin_cos():
+    df = DataFrame({"x": [0, 90, 180]})
+
+    df2: DataFrame = encode_sin_cos(df, "x", 360)
+
+    assert "x_sin" in df2.columns
+    assert "x_cos" in df2.columns
+    assert "x" not in df2.columns
+    assert np.isclose(df2["x_sin"].to_numpy(), np.array([0, 1, 0]), atol=1e-10).all()
+    assert np.isclose(df2["x_cos"].to_numpy(), np.array([1, 0, -1]), atol=1e-10).all()

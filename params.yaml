@@ -2,11 +2,5 @@ prepare:
   split: 0.20
 
 train:
-  objective: 'reg:squarederror'
+  optimize-rounds: 100
   num-boost-round: 2000
-  tree-method: 'hist'
-  max-depth: 5
-  min-child-weight: 5
-  eta: 0.1
-  subsample: 0.9
-  colsample-bytree: 0.9

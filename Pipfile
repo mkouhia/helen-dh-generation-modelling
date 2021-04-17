@@ -26,6 +26,7 @@ xgboost = "*"
 holidays = "*"
 seaborn = "*"
 graphviz = "*"
+optuna = "*"
 
 [requires]
 python_version = "3.9"
