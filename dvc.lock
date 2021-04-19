@@ -26,28 +26,26 @@ stages:
       md5: 2dea54fd98f93fca994c9ebe0d77bbc2
       size: 842234
     - path: dh_modelling/featurize.py
-      md5: 8d3f4a97e69c5dd259cfa8920f082e97
-      size: 2908
+      md5: c0e2645ed4579209f7576c727d0e8841
+      size: 2917
     outs:
     - path: data/intermediate/features.feather
       md5: cc0560ed53dde7a2e7d5b511c309d9a6
       size: 1149626
   train:
     cmd: python -m dh_modelling.train --train-path data/processed/train.feather --model-path
-      models/model.bin --objective reg:squarederror --num-boost-round 2000 --tree-method
-      hist --max-depth 5 --min-child-weight 5 --eta 0.1 --subsample 0.9 --colsample-bytree
-      0.9
+      models/model.bin --optimize-rounds 100 --num-boost-round 2000 --use-gpu
     deps:
     - path: data/processed/train.feather
       md5: 9ec822a16d3f92c1df72dd6495cc4783
       size: 920298
     - path: dh_modelling/train.py
-      md5: 516adf3d7435a4db8759410e986c556e
-      size: 2550
+      md5: e2eaac2c3a66b1729fb5de43c46f9cbd
+      size: 4967
     outs:
     - path: models/model.bin
-      md5: 192170a358f3764da64053c6d098e155
-      size: 4558272
+      md5: 931f72b21c8ff97de0aab80744b23972
+      size: 16832672
   evaluate:
     cmd: python -m dh_modelling.evaluate --model-path models/model.bin --test-path
       data/processed/test.feather --metrics-path output/score.json
@@ -57,14 +55,14 @@ stages:
       size: 234434
     - path: dh_modelling/evaluate.py
       md5: 2cf53287542e93cd83720fc737398bcd
-      size: 2238
+      size: 2159
     - path: models/model.bin
-      md5: 192170a358f3764da64053c6d098e155
-      size: 4558272
+      md5: 931f72b21c8ff97de0aab80744b23972
+      size: 16832672
     outs:
     - path: output/score.json
-      md5: ad6c9bab5c7d4d4d0eab8fecb82a88cb
-      size: 143
+      md5: c75c81f175dac4eddb23218adbd67fec
+      size: 144
   split:
     cmd: python -m dh_modelling.split --input data/intermediate/features.feather --test-size
       0.2 --train-output data/processed/train.feather --test-output data/processed/test.feather
