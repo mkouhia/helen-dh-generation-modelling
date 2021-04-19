@@ -4,3 +4,4 @@ prepare:
 train:
   optimize-rounds: 100
   num-boost-round: 2000
+  seed: 1330755435

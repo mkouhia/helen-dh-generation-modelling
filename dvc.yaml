@@ -57,6 +57,7 @@ stages:
       --model-path ${file-paths.model}
       --optimize-rounds ${train.optimize-rounds}
       --num-boost-round ${train.num-boost-round}
+      --seed ${train.seed}
       --use-gpu
     deps:
       - ${file-paths.train}
