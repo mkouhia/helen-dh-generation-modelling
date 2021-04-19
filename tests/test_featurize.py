@@ -35,7 +35,7 @@ def test_featurize():
     expected["epoch_seconds"] = np.array(
         [1417392000, 1417395600, 1417399200, 1417402800]
     ).astype(np.int64)
-    expected["is_business_day"] = np.array([1, 1, 1, 1])
+    expected["is_business_day"] = np.array([1, 1, 1, 1]).astype(np.int32)
 
     received: DataFrame = featurize(df_input)
 
