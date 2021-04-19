@@ -47,6 +47,14 @@ dvc remote modify --local s3-general secret_access_key MY_SECRET_ACCESS_KEY
 dvc pull
 ```
 
+### Reproduce results and/or perform analysis with dvc
+
+```sh
+dvc repro
+dvc metrics show
+dvc metrics diff baseline
+```
+
 ### Start jupyter notebook
 If you are running Jupyter notebook on a server, to access it on local browser, you must either pipe
 the connection via ssh:
