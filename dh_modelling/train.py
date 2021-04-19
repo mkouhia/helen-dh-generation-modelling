@@ -90,7 +90,12 @@ def optuna_optimize_hyperparameters(
     """
     sampler = optuna.samplers.TPESampler(seed=seed)
     pruner = optuna.pruners.MedianPruner(n_warmup_steps=5)
-    study = optuna.create_study(sampler=sampler, pruner=pruner, direction="minimize")
+    study = optuna.create_study(
+            sampler=sampler,
+            pruner=pruner,
+            direction="minimize",
+            storage="sqlite:///study.sqlite",
+    )
     study.optimize(func, n_trials=n_trials)
 
     print("Number of finished trials: {}".format(len(study.trials)))
