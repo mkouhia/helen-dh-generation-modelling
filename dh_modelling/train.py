@@ -46,7 +46,7 @@ class Objective(object):
             "min_child_weight": trial.suggest_float("min_child_weight", 0.1, 5),
             "colsample_bytree": trial.suggest_float("colsample_bytree", 0.2, 1.0),
             # "eta": trial.suggest_float("eta", 1e-8, 1.0, log=True),
-            "eta": trial.suggest_float("eta", 1e-3, 0.5, log=True),
+            "eta": trial.suggest_float("eta", 1e-3, 0.5),
             # "lambda": trial.suggest_float("lambda", 1e-8, 1.0, log=True),
             # "alpha": trial.suggest_float("alpha", 1e-8, 1.0, log=True),
             # "gamma": trial.suggest_float("gamma", 1e-8, 10, log=True)
@@ -75,7 +75,7 @@ class Objective(object):
         )
 
         best_eval_idx = history[f"test-{eval_metric}-mean"].argmin()
-        trial.set_user_attr("num_rounds", best_eval_idx + 1)
+        trial.set_user_attr("num_rounds", int(best_eval_idx + 1))
 
         return history[f"test-{eval_metric}-mean"].iloc[best_eval_idx]
 
