@@ -42,11 +42,11 @@ class Objective(object):
             "objective": "reg:squarederror",
             "eval_metric": eval_metric,
             ## Others
-            "max_depth": trial.suggest_int("max_depth", 1, 9),
+            "max_depth": trial.suggest_int("max_depth", 5, 9),
             "min_child_weight": trial.suggest_float("min_child_weight", 0.1, 5),
             "colsample_bytree": trial.suggest_float("colsample_bytree", 0.2, 1.0),
             # "eta": trial.suggest_float("eta", 1e-8, 1.0, log=True),
-            "eta": trial.suggest_float("eta", 1e-3, 0.5),
+            "eta": trial.suggest_float("eta", 1e-3, 0.5, log=True),
             # "lambda": trial.suggest_float("lambda", 1e-8, 1.0, log=True),
             # "alpha": trial.suggest_float("alpha", 1e-8, 1.0, log=True),
             # "gamma": trial.suggest_float("gamma", 1e-8, 10, log=True)
