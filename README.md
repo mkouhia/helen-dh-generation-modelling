@@ -42,8 +42,8 @@ Add s3 credentials, replacing _MY_ACCESS_KEY_ID_ and _MY_SECRET_ACCESS_KEY_ with
 then pull in data
 ```sh
 pipenv shell
-dvc remote modify s3-general access_key_id MY_ACCESS_KEY_ID
-dvc remote modify s3-general secret_access_key MY_SECRET_ACCESS_KEY
+dvc remote modify --local s3-general access_key_id MY_ACCESS_KEY_ID
+dvc remote modify --local s3-general secret_access_key MY_SECRET_ACCESS_KEY
 dvc pull
 ```
 
