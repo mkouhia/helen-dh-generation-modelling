@@ -28,6 +28,7 @@ seaborn = "*"
 graphviz = "*"
 optuna = "*"
 optuna-dashboard = "*"
+jupyterlab = "*"
 
 [requires]
 python_version = "3.9"
