@@ -1,2 +1,7 @@
 prepare:
   split: 0.20
+
+train:
+  optimize-rounds: 100
+  num-boost-round: 5000
+  seed: 1330755435

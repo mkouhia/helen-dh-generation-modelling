@@ -12,8 +12,8 @@ stages:
       md5: a5ec283006abb2d2758d4aefb4b2d402
       size: 1293525
     - path: dh_modelling/prepare.py
-      md5: 258fe2a2dc6350a186ea4f2b32192af1
-      size: 7709
+      md5: ad0d265934dbb45e6301d292a9e2d90f
+      size: 7493
     outs:
     - path: data/intermediate/prepared.feather
       md5: 2dea54fd98f93fca994c9ebe0d77bbc2
@@ -26,43 +26,44 @@ stages:
       md5: 2dea54fd98f93fca994c9ebe0d77bbc2
       size: 842234
     - path: dh_modelling/featurize.py
-      md5: 7b3cb34680d83c8ae463096d2b7b0dac
-      size: 2408
+      md5: c0e2645ed4579209f7576c727d0e8841
+      size: 2917
     outs:
     - path: data/intermediate/features.feather
       md5: cc0560ed53dde7a2e7d5b511c309d9a6
       size: 1149626
   train:
     cmd: python -m dh_modelling.train --train-path data/processed/train.feather --model-path
-      models/model.joblib
+      models/model.bin --optimize-rounds 100 --num-boost-round 5000 --seed 1330755435
+      --use-gpu
     deps:
     - path: data/processed/train.feather
       md5: 9ec822a16d3f92c1df72dd6495cc4783
       size: 920298
     - path: dh_modelling/train.py
-      md5: d1523f8626231fdecc8850bd4cd26d1a
-      size: 1194
+      md5: e39d3b11cbb7dc3a9cf8fd8a8f114792
+      size: 5385
     outs:
-    - path: models/model.joblib
-      md5: ff139e72ff51675e1ca194a59e2c7e56
-      size: 246
+    - path: models/model.bin
+      md5: 2f9b0c0faee481ef30e6ee92a73a9d33
+      size: 58368028
   evaluate:
-    cmd: python -m dh_modelling.evaluate --model-path models/model.joblib --test-path
+    cmd: python -m dh_modelling.evaluate --model-path models/model.bin --test-path
       data/processed/test.feather --metrics-path output/score.json
     deps:
     - path: data/processed/test.feather
       md5: 2432d4f643c0d195d2fc898dc96b0a72
       size: 234434
     - path: dh_modelling/evaluate.py
-      md5: adf9ec6a3e14675f6547e8720bfb122e
-      size: 2096
-    - path: models/model.joblib
-      md5: ff139e72ff51675e1ca194a59e2c7e56
-      size: 246
+      md5: 2cf53287542e93cd83720fc737398bcd
+      size: 2159
+    - path: models/model.bin
+      md5: 2f9b0c0faee481ef30e6ee92a73a9d33
+      size: 58368028
     outs:
     - path: output/score.json
-      md5: 04c095774c87c94944eb03686a280f12
-      size: 143
+      md5: b7fe5cd1bce545c73a7a23e9deea2579
+      size: 144
   split:
     cmd: python -m dh_modelling.split --input data/intermediate/features.feather --test-size
       0.2 --train-output data/processed/train.feather --test-output data/processed/test.feather
@@ -72,7 +73,7 @@ stages:
       size: 1149626
     - path: dh_modelling/split.py
       md5: cc7498adfaac8dc8b76e3f6c4c4eaa65
-      size: 1938
+      size: 1875
     outs:
     - path: data/processed/test.feather
       md5: 2432d4f643c0d195d2fc898dc96b0a72

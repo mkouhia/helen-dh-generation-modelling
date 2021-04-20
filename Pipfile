@@ -25,6 +25,11 @@ requests = "*"
 xgboost = "*"
 holidays = "*"
 seaborn = "*"
+graphviz = "*"
+optuna = "*"
+optuna-dashboard = "*"
+jupyterlab = "*"
+shap = "*"
 
 [requires]
 python_version = "3.9"

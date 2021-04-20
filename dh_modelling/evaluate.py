@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 
 import numpy as np
+import xgboost as xgb
 from pandas import DataFrame
 from sklearn.metrics import (
     mean_absolute_error,
@@ -12,17 +13,18 @@ from sklearn.metrics import (
 )
 
 from .helpers import load_intermediate
-from .model import Model, load_model
 
 
-def evaluate(model: Model, df: DataFrame) -> dict[str, float]:
+def evaluate(model: xgb.Booster, df: DataFrame) -> dict[str, float]:
     logging.info("Evaluating model performance")
-    actual: np.ndarray = df["dh_MWh"]
 
-    X: np.ndarray = df["Ilman lämpötila (degC)"].to_numpy()
+    dtest = xgb.DMatrix(data=df.drop("dh_MWh", axis=1), label=df["dh_MWh"])
 
-    predictions: np.ndarray = model.predict(X)
+    predictions: np.ndarray = model.predict(dtest)
+    return calculate_metrics(df["dh_MWh"].to_numpy(), predictions)
 
+
+def calculate_metrics(actual: np.ndarray, predictions: np.ndarray) -> dict:
     return {
         "mean_absolute_error": mean_absolute_error(actual, predictions),
         "mean_absolute_percentage_error": mean_absolute_percentage_error(
@@ -70,7 +72,8 @@ if __name__ == "__main__":
 
     df_test: DataFrame = load_intermediate(path=args.test_path.absolute())
 
-    model = load_model(args.model_path.absolute())
+    model = xgb.Booster()
+    model.load_model(args.model_path.absolute())
     metrics: dict = evaluate(model, df_test)
 
     save_metrics(metrics, args.metrics_path.absolute())

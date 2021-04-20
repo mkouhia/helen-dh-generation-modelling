@@ -45,7 +45,7 @@ class FmiData:
         :param raw_file_paths: Location of CSV files, downloaded from FMI data service
         """
         self.station_name = station_name
-        self.raw_file_paths = raw_file_paths
+        self.raw_file_paths = set(raw_file_paths)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, FmiData):
